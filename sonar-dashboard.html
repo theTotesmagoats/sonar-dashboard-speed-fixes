@@ -1,0 +1,32 @@
+// Speed constants for different object types (reduced by 75% total from original)
+const SPEED_SUBMARINE_MIN = 0.125;
+const SPEED_SUBMARINE_MAX = 0.45;
+const SPEED_SHIP_MIN = 0.25;
+const SPEED_SHIP_MAX = 0.875;
+const SPEED_AIRPLANE_MIN = 1.0;
+const SPEED_AIRPLANE_MAX = 2.25;
+
+// Helper function to get random speed for object type
+function getRandomSpeed(objectType) {
+  let min, max;
+  
+  switch (objectType) {
+    case 'submarine':
+      min = SPEED_SUBMARINE_MIN;
+      max = SPEED_SUBMARINE_MAX;
+      break;
+    case 'ship':
+      min = SPEED_SHIP_MIN;
+      max = SPEED_SHIP_MAX;
+      break;
+    case 'airplane':
+      min = SPEED_AIRPLANE_MIN;
+      max = SPEED_AIRPLANE_MAX;
+      break;
+    default:
+      min = SPEED_SUBMARINE_MIN;
+      max = SPEED_SUBMARINE_MAX;
+  }
+  
+  return Math.random() * (max - min) + min;
+}
