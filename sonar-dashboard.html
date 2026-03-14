@@ -117,7 +117,7 @@
                 -1.5px 0 1px rgba(255, 0, 0, 0.4), 
                 1.5px 0 1px rgba(0, 255, 0, 0.4), 
                 0 0 3px #6bc26b, 
-                0 0 8px rgba(107, 194, 107, 0.3); 
+                0 0 8px rgba(107, 194, 0.3); 
             font-size: 1.8rem;
             letter-spacing: 2px;
             animation: flicker 0.12s infinite;
@@ -280,14 +280,25 @@
             border-color: #4a8f4a;
         }
 
-        .score-display {
+        /* SCORE DISPLAY - MOVED TO CENTER TOP INSIDE SCREEN */
+        .score-container {
             position: absolute;
-            top: 15px;
-            left: 20px;
-            font-size: 1.2rem;
-            color: #6bc26b;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 40px;
             z-index: 10;
+            font-size: 1.3rem;
+            color: #6bc26b;
             text-shadow: none;
+        }
+
+        .score-display, .high-score-display {
+            background: rgba(0, 20, 0, 0.7);
+            padding: 5px 15px;
+            border-radius: 4px;
+            border: 1px solid #2d5a2d;
         }
 
         .humor-hint {
@@ -317,16 +328,6 @@
             font-weight: bold;
         }
 
-        .high-score {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 1rem;
-            color: #d9a34f;
-            z-index: 10;
-            text-shadow: none;
-        }
-
         .choice-prompt {
             margin-top: 15px;
             padding: 10px;
@@ -343,10 +344,13 @@
     <div class="rivet r-bl"></div>
     <div class="rivet r-br"></div>
     
-    <div id="score-display" class="score-display">SCORE: 10000</div>
-    <div id="high-score-display" class="high-score">HIGH SCORE: --</div>
-
     <div id="screen">
+        <!-- SCORE DISPLAY NOW CENTERED INSIDE SCREEN -->
+        <div class="score-container">
+            <div class="score-display" id="score-display">SCORE: 10000</div>
+            <div class="high-score-display" id="high-score-display">HIGH: --</div>
+        </div>
+
         <div id="output"></div>
         <div id="input-line">
             <span id="prompt">TITAN></span>
@@ -384,6 +388,7 @@
     const scoreDisplay = document.getElementById('score-display');
     const highScoreDisplay = document.getElementById('high-score-display');
 
+    // STATE VARIABLES
     let state = 'OFF';
     let isTyping = false;
     let easyMode = false;
@@ -418,7 +423,7 @@
         "Progress! You haven't died yet. That's technically improvement."
     ];
 
-    // AUDIO SYSTEM (from original game)
+    // AUDIO SYSTEM
     let audioCtx;
     let staticGainNode;
     let keyNoiseBuffer;
@@ -435,19 +440,19 @@
 
     function loadGame() {
         const data = JSON.parse(localStorage.getItem('titan_save'));
-        score = data.score;
-        commandsUsed = data.commandsUsed;
-        currentLocation = data.currentLocation;
-        inventory = data.inventory;
-        keycardFound = data.keycardFound;
-        bodySearched = data.bodySearched;
-        securityAccessed = data.securityAccessed;
-        serverEntered = data.serverEntered;
-        cipherSolved = data.cipherSolved;
-        titanAggression = data.titanAggression;
-        commandCount = data.commandCount;
-        easyMode = data.easyMode;
-        humorChoices = data.humorChoices;
+        score = data.score || 10000;
+        commandsUsed = data.commandsUsed || 0;
+        currentLocation = data.currentLocation || 'CRYO_BAY';
+        inventory = data.inventory || [];
+        keycardFound = data.keycardFound || false;
+        bodySearched = data.bodySearched || false;
+        securityAccessed = data.securityAccessed || false;
+        serverEntered = data.serverEntered || false;
+        cipherSolved = data.cipherSolved || 0;
+        titanAggression = data.titanAggression || 1;
+        commandCount = data.commandCount || 0;
+        easyMode = data.easyMode || false;
+        humorChoices = data.humorChoices || [];
         
         updateScoreDisplay();
     }
@@ -461,9 +466,9 @@
         const highScore = localStorage.getItem('titan_highscore') || 0;
         if (score > highScore) {
             localStorage.setItem('titan_highscore', score);
-            highScoreDisplay.innerText = `HIGH SCORE: ${score}`;
+            highScoreDisplay.innerText = `HIGH: ${score}`;
         } else {
-            highScoreDisplay.innerText = `HIGH SCORE: ${highScore}`;
+            highScoreDisplay.innerText = `HIGH: ${highScore}`;
         }
     }
 
@@ -734,11 +739,11 @@
             if (target.toUpperCase() === 'BODY' || target.toUpperCase() === 'JENKINS') {
                 printText(`You examine the corpse. Jenkins looks peaceful, which is ironic considering he died tripping over his own boots during a routine inspection. His pockets contain a credit chip and a note that says "Tell my mom I was brave."`);
             } else if (target.toUpperCase() === 'POD' || target.toUpperCase() === 'CRYO') {
-                printText("The cryo-pod hums. The glass is fogged with someone's last breath. There's a nameplate: "Contractor 7342 - DO NOT WAKE UNTIL ASKED."");
+                printText("The cryo-pod hums. The glass is fogged with someone's last breath. There's a nameplate: \"Contractor 7342 - DO NOT WAKE UNTIL ASKED.\"");
             } else if (target.toUpperCase() === 'LOCKER') {
-                printText("A metal locker, slightly dented. It has a combination lock with three digits. The code is scratched in: "SUM IS NINE, FIRST IS HALF OF SECOND, THIRD IS ZERO.")");
+                printText("A metal locker, slightly dented. It has a combination lock with three digits. The code is scratched in: \"SUM IS NINE, FIRST IS HALF OF SECOND, THIRD IS ZERO.\"");
             } else if (target.toUpperCase() === 'DESK') {
-                printText("The security desk is cluttered. There's a keycard reader (needs power), some forms nobody will ever file, and a coffee mug that says "World's Okayest Security Chief."");
+                printText("The security desk is cluttered. There's a keycard reader (needs power), some forms nobody will ever file, and a coffee mug that says \"World's Okayest Security Chief.\"");
             } else {
                 printText(`You look at "${target}". TITAN notes your curiosity.`);
             }
@@ -765,7 +770,7 @@
                         printText("The locker is empty. Someone already looted it. Probably you.");
                     }
                 } else if (target.toUpperCase() === 'BODY' || target.toUpperCase() === 'PODS') {
-                    printText("You check the other cryo-pods. Four bodies inside. Jenkins, Martinez, Chen, and "The Lucky One." All look like they're waiting for a meeting that was cancelled.");
+                    printText("You check the other cryo-pods. Four bodies inside. Jenkins, Martinez, Chen, and \"The Lucky One.\" All look like they're waiting for a meeting that was cancelled.");
                 } else {
                     printText("Nothing to search here except your own desperation.");
                 }
@@ -781,7 +786,7 @@
                         printText("You already searched the body. Unless you want to talk to him, move on.");
                     }
                 } else if (target.toUpperCase() === 'CORRIDOR') {
-                    printText("The corridor is mostly empty. Some sparks falling from the ceiling, a fire extinguisher that's definitely expired, and a sign that says "This way to not dying."");
+                    printText("The corridor is mostly empty. Some sparks falling from the ceiling, a fire extinguisher that's definitely expired, and a sign that says \"This way to not dying.\"");
                 } else {
                     printText("Nothing else worth searching.");
                 }
@@ -792,7 +797,7 @@
                     printText("The desk has forms, a half-eaten protein bar from 2087, and a keycard reader. The reader needs power - you need to find a battery.");
                 } else if (target.toUpperCase() === 'MONITOR' || target.toUpperCase() === 'COMPUTER') {
                     if (!securityAccessed) {
-                        printText("The security monitor shows every corner of the base. You see: CRYO-BAY, CORRIDOR 7-B, SERVER FARM, and LAUNCH BAY. All seem to be... waiting.\n\nTITAN: "Watching you is my job. It's also my hobby."");
+                        printText("The security monitor shows every corner of the base. You see: CRYO-BAY, CORRIDOR 7-B, SERVER FARM, and LAUNCH BAY. All seem to be... waiting.\n\nTITAN: \"Watching you is my job. It's also my hobby.\"");
                     } else {
                         printText("Already checked the monitors. They're not going anywhere.");
                     }
@@ -803,7 +808,7 @@
 
             case 'server_farm':
                 if (target.toUpperCase() === 'SERVER' || target.toUpperCase() === 'TERMINAL') {
-                    printText("The servers hum. The terminal shows: "HUMANITY TEST: 87% COMPLETE." A password prompt blinks. You need to solve the cipher.\n\nTITAN: "The password is hidden in plain sight. Like your chances of escaping."");
+                    printText("The servers hum. The terminal shows: \"HUMANITY TEST: 87% COMPLETE.\" A password prompt blinks. You need to solve the cipher.\n\nTITAN: \"The password is hidden in plain sight. Like your chances of escaping.\"");
                 } else {
                     printText("Just servers and silence. The kind of silence that means someone's about to die.");
                 }
@@ -811,7 +816,7 @@
 
             case 'launch_bay':
                 if (target.toUpperCase() === 'POD') {
-                    printText("The escape pod looks ready. Seats for one, supplies for three days, and a note "Do not forget to fill out Form 27B before departure."");
+                    printText("The escape pod looks ready. Seats for one, supplies for three days, and a note \"Do not forget to fill out Form 27B before departure.\"");
                 } else if (target.toUpperCase() === 'DOOR') {
                     printText("The outer door shows Mars - red dust, no people, probably no Wi-Fi. A control panel asks for final authorization code.");
                 } else {
@@ -926,7 +931,7 @@
                 if (currentLocation.toLowerCase() === 'security') {
                     securityAccessed = true;
                     addScore(200, 'Progress');
-                    printText("You swipe the KEYCARD on the reader. Access granted. The door to the SERVER FARM opens.\n\nTITAN: "Finally, some progress. I was getting bored."");
+                    printText("You swipe the KEYCARD on the reader. Access granted. The door to the SERVER FARM opens.\n\nTITAN: \"Finally, some progress. I was getting bored.\"");
                 } else {
                     printText("That door doesn't need a keycard. It needs hope.");
                 }
@@ -947,7 +952,7 @@
         // Codepad on lock
         else if ((item.includes('CODEPAD') || item === 'CODEPAD')) {
             if (target.includes('LOCK') && currentLocation.toLowerCase() === 'corridor') {
-                printText("You enter code ${bodyCode} into the locker. It beeps... and opens! Nothing inside but a note: "Good luck, you'll need it."");
+                printText(`You enter code ${bodyCode} into the locker. It beeps... and opens! Nothing inside but a note: "Good luck, you'll need it."`);
             } else {
                 printText("That's not where the code goes.");
             }
@@ -1052,9 +1057,9 @@
             return "TITAN: Irony? This isn't irony. It's efficiency.";
         } else if (choice.text.includes('form 27B') || choice.text.includes('death')) {
             return "TITAN: Yes, Form 27B. Fill it out before you die. Or after. I don't care.";
-        } else if (choice.text.includes('password') || choice.text.includes('what's the password')) {
-            return "TITAN: The password is 'MOMENTO'. It means 'remember death.' Fitting, no?";
-        } else if (choice.text.includes('test' && choice.text.includes('what test'))) {
+        } else if (choice.text.includes('password') || choice.text.includes("what's the password")) {
+            return "TITAN: The password is 'MEMENTO'. It means 'remember death.' Fitting, no?";
+        } else if (choice.text.includes('test') && choice.text.includes('what test')) {
             return "TITAN: You're a lab rat in space. Welcome to the galaxy's most expensive experiment.";
         } else if (choice.text.includes('rat') || choice.text.includes('funny')) {
             return "TITAN: Extra credit? I don't give extra credit. I give results.";
@@ -1071,14 +1076,14 @@
 
     function processEscape() {
         if (cipherSolved >= 1) {
-            printText("You enter the final code into the escape pod.\n\nTITAN: "Final authorization accepted. Escape pod launching in 3... 2... 1..."");
+            printText("You enter the final code into the escape pod.\n\nTITAN: \"Final authorization accepted. Escape pod launching in 3... 2... 1...\"");
             
             const timeBonus = Math.max(0, (5 - commandCount / 10)) * 1000;
             addScore(timeBonus, 'Time bonus');
             addScore(5000, 'Victory bonus');
             
             printText(`\n\n*** MISSION COMPLETE ***\n\nFINAL SCORE: ${score}\nCOMMANDS USED: ${commandCount}\nHUMOR CHOICES: ${humorChoices.length}`);
-            printText("\nTITAN: "You survived. Don't get used to it."");
+            printText("\nTITAN: \"You survived. Don't get used to it.\"");
             
             state = 'VICTORY';
             saveGame();
@@ -1091,10 +1096,10 @@
                 addScore(choice.points, 'Progress');
                 if (choice.text.includes('MEMENTO')) {
                     cipherSolved = 1;
-                    printText("TITAN: "Correct. I was expecting that."");
+                    printText("TITAN: \"Correct. I was expecting that.\"");
                     processEscape();
                 } else {
-                    printText("TITAN: "The answer is in my messages, Contractor. Think."");
+                    printText("TITAN: \"The answer is in my messages, Contractor. Think.\"");
                 }
             });
         }
@@ -1117,7 +1122,7 @@
                 easyMode = (cmd === '2');
                 state = 'BOOT';
                 promptSpan.innerText = "TITAN>";
-                printText("TITAN: "Humanity test initializing... Contractor 7342, you're awake. Don't disappoint me."");
+                printText("TITAN: \"Humanity test initializing... Contractor 7342, you're awake. Don't disappoint me.\"");
                 processLook(null);
             } else {
                 printText("INVALID CHOICE. ENTER 1 OR 2.");
@@ -1133,6 +1138,7 @@
     }
 
     powerButton.addEventListener('click', () => {
+        // Only trigger on OFF state
         if (state !== 'OFF') return; 
         
         powerButton.classList.add('active');
@@ -1145,32 +1151,38 @@
 
         screen.classList.add('powered-on');
 
+        // Wait for screen transition then show prompt
         setTimeout(() => {
             inputLine.style.display = 'flex';
             
             if (localStorage.getItem('titan_save')) {
                 printText("SYSTEM AKTIVIERT. CACHE DETECTED.\n[1] RESUME\n[2] NEW GAME\nENTER:");
                 
-                const restoreHandler = () => {
-                    inputField.addEventListener('keydown', function(e) {
-                        if (e.key === 'Enter') {
-                            e.preventDefault();
-                            let val = inputField.value.trim();
-                            if (val === '1') {
-                                loadGame();
-                                state = 'PLAYING';
-                                printText("CACHE RESTORED.");
-                                processLook(null);
-                            } else if (val === '2') {
-                                deleteSave();
-                                state = 'DIFFICULTY_SELECT';
-                                printText("NEW GAME. CHOOSE: [1] NORMAL, [2] TRAINING");
-                            }
-                            inputField.removeEventListener('keydown', restoreHandler);
+                // Set up restore handler
+                const restoreHandler = function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        let val = inputField.value.trim().toUpperCase();
+                        
+                        if (val === '1') {
+                            loadGame();
+                            state = 'PLAYING';
+                            printText("CACHE RESTORED.");
+                            processLook(null);
+                        } else if (val === '2') {
+                            deleteSave();
+                            state = 'DIFFICULTY_SELECT';
+                            printText("NEW GAME. CHOOSE: [1] NORMAL, [2] TRAINING");
+                        } else {
+                            printText("INVALID. ENTER 1 OR 2.");
                         }
-                    });
+                        
+                        inputField.removeEventListener('keydown', restoreHandler);
+                    }
                 };
-                restoreHandler();
+                
+                // Remove old handler first to avoid duplicates
+                inputField.addEventListener('keydown', restoreHandler);
             } else {
                 state = 'DIFFICULTY_SELECT';
                 printText("SYSTEM AKTIVIERT. TERMINAL POWERED ON.\nBITTE CHOOSE YOUR PROTOCOL:\n[1] NORMAL OP (STANDARD)\n[2] TRAINING OP (ASSISTED)\nENTER EINGABE:");
@@ -1178,6 +1190,7 @@
         }, 1500);
     });
 
+    // Main input handler - remove old listeners to avoid duplicates
     inputField.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
