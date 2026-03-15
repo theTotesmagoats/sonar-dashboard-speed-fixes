@@ -1,1541 +1,1117 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Faculty Time Compass</title>
-    <style>
-        :root {
-            --primary: #6366f1;
-            --success: #22c55e;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-300: #d1d5db;
-            --gray-400: #9ca3af;
-            --gray-500: #6b7280;
-            --gray-600: #4b5563;
-            --gray-700: #374151;
-            --gray-800: #1f2937;
-            --gray-900: #111827;
-            --clinical: #4CAF50;
-            --research: #FF9800;
-            --education: #2196F3;
-            --admin: #9C27B0;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AdvisorFlow - Call Tracker</title>
+  <style>
+    :root {
+      --led-orange: #ff6b35;
+      --led-red: #d94f4f;
+      --led-bg: #1a1a2e;
+      --panel-bg: #0f0f1a;
+      --text-primary: #ffffff;
+      --text-secondary: #a0a0b0;
+      --accent-blue: #4fc3f7;
+      --accent-green: #66bb6a;
+      --accent-yellow: #ffa726;
+      --border-color: #2d2d44;
+    }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: var(--gray-50);
-            color: var(--gray-800);
-            line-height: 1.6;
-        }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 
-        /* Header */
-        .header {
-            background: white;
-            border-bottom: 1px solid var(--gray-200);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    body {
+      background: linear-gradient(135deg, #0a0a12 0%, #1a1a2e 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--gray-900);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+    /* === TICKER BAR === */
+    .ticker-bar {
+      display: flex;
+      gap: 30px;
+      background: #0d0d14;
+      padding: 12px 30px;
+      border-bottom: 2px solid var(--led-orange);
+      overflow-x: auto;
+      white-space: nowrap;
+    }
 
-        .logo-icon {
-            width: 32px;
-            height: 32px;
-            background: linear-gradient(135deg, var(--primary), #8b5cf6);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
+    .ticker-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
 
-        .header-actions {
-            display: flex;
-            gap: 1rem;
-        }
+    .ticker-label { color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; font-size: 11px; }
+    .ticker-value { font-weight: bold; color: var(--accent-green); }
+    .ticker-value.negative { color: var(--led-red); }
+    .ticker-trend { font-size: 10px; }
 
-        /* Main Layout */
-        .main-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem;
-            display: grid;
-            grid-template-columns: 350px 1fr;
-            gap: 2rem;
-        }
+    /* === MAIN LAYOUT === */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      gap: 20px;
+    }
 
-        /* Cards */
-        .card {
-            background: white;
-            border-radius: 16px;
-            padding: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
-        }
+    /* === TIMER SECTION === */
+    .timer-section {
+      background: var(--panel-bg);
+      border-radius: 16px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
 
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--gray-100);
-        }
+    .timer-display {
+      font-family: 'Courier New', monospace;
+      font-size: 120px;
+      color: var(--led-orange);
+      text-shadow: 0 0 20px rgba(255, 107, 53, 0.6), 0 0 40px rgba(255, 107, 53, 0.3);
+      margin-bottom: 20px;
+      letter-spacing: 8px;
+    }
 
-        .card-title {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--gray-800);
-        }
+    .timer-controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
 
-        /* Timer Section */
-        .timer-section {
-            text-align: center;
-            padding: 2rem;
-        }
+    .btn {
+      padding: 14px 32px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+    }
 
-        .timer-status {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
+    .btn-primary {
+      background: var(--led-orange);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+    }
 
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--gray-300);
-        }
+    .btn-secondary {
+      background: var(--border-color);
+      color: var(--text-primary);
+    }
 
-        .status-dot.active {
-            background: var(--success);
-            animation: pulse 2s infinite;
-        }
+    .btn-danger {
+      background: var(--led-red);
+      color: #fff;
+    }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
+    .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .timer-display {
-            font-size: 3rem;
-            font-weight: 700;
-            color: var(--gray-900);
-            font-family: 'SF Mono', Monaco, monospace;
-            margin-bottom: 1.5rem;
-        }
+    /* === CATEGORY SELECTOR === */
+    .category-selector {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
 
-        .timer-controls {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-        }
+    .cat-btn {
+      padding: 8px 20px;
+      border-radius: 6px;
+      background: var(--border-color);
+      color: var(--text-primary);
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
 
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+    .cat-btn.active {
+      background: var(--accent-blue);
+      color: #fff;
+    }
 
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
+    /* === ANXIETY RATING === */
+    .anxiety-section {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
 
-        .btn-primary:hover {
-            background: #5756d1;
-        }
+    .anxiety-label { color: var(--text-secondary); font-size: 14px; }
 
-        .btn-secondary {
-            background: var(--gray-100);
-            color: var(--gray-700);
-        }
+    .rating-buttons {
+      display: flex;
+      gap: 8px;
+    }
 
-        .btn-secondary:hover {
-            background: var(--gray-200);
-        }
+    .rating-btn {
+      width: 45px;
+      height: 45px;
+      border-radius: 8px;
+      background: var(--border-color);
+      color: var(--text-primary);
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
 
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
+    .rating-btn:hover { transform: scale(1.1); }
+    .rating-btn.selected { background: var(--led-orange); color: #fff; box-shadow: 0 0 15px rgba(255, 107, 53, 0.6); }
 
-        /* Category Cards */
-        .category-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
+    /* === INSIGHTS PANEL === */
+    .insights-panel {
+      background: linear-gradient(135deg, #1a1a3e 0%, #2d2d4f 100%);
+      border-radius: 16px;
+      padding: 25px;
+      margin-top: 20px;
+    }
 
-        .category-item {
-            padding: 1rem;
-            border-radius: 12px;
-            background: var(--gray-50);
-            transition: all 0.2s;
-            cursor: pointer;
-            border: 2px solid transparent;
-        }
+    .insights-title {
+      font-size: 18px;
+      color: var(--accent-yellow);
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-        .category-item:hover {
-            transform: translateY(-2px);
-        }
+    .insight-content {
+      line-height: 1.7;
+      font-size: 15px;
+      color: var(--text-primary);
+    }
 
-        .category-item.active {
-            background: var(--gray-100);
-            border-color: var(--primary);
-        }
+    .insight-highlight {
+      background: rgba(255, 167, 38, 0.15);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: bold;
+      color: var(--accent-yellow);
+    }
 
-        .category-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
+    /* === DAILY LOG === */
+    .daily-log {
+      background: var(--panel-bg);
+      border-radius: 16px;
+      padding: 25px;
+      margin-top: 20px;
+    }
 
-        .category-name {
-            font-weight: 600;
-            color: var(--gray-800);
-        }
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
 
-        .category-color {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
+    .log-title { font-size: 18px; color: var(--accent-blue); }
 
-        .progress-bar {
-            height: 8px;
-            background: var(--gray-200);
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 0.75rem 0;
-        }
+    .call-entry {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 12px;
+      border-left: 4px solid var(--accent-blue);
+    }
 
-        .progress-fill {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.3s ease;
-        }
+    .call-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
 
-        .category-stats {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.875rem;
-            color: var(--gray-500);
-        }
+    .call-time { font-size: 13px; color: var(--text-secondary); }
+    .call-meta { display: flex; gap: 15px; font-size: 12px; }
+    .call-note { font-style: italic; color: var(--text-secondary); margin-top: 8px; font-size: 13px; }
 
-        /* Trajectory Section */
-        .trajectory-grid {
-            display: grid;
-            gap: 1.5rem;
-        }
+    /* === ADD CATEGORY FORM === */
+    .add-category-form {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid var(--border-color);
+    }
 
-        .progress-ring-container {
-            text-align: center;
-            padding: 1rem;
-        }
+    .form-input {
+      padding: 10px 15px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-size: 14px;
+    }
 
-        .progress-ring {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 0.5rem;
-        }
+    .form-input:focus { outline: none; border-color: var(--accent-blue); }
 
-        /* Weekly View */
-        .week-view {
-            background: white;
-            border-radius: 16px;
-            padding: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        }
+    /* === WEEKLY SUMMARY TOGGLE === */
+    .toggle-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
+    }
 
-        .day-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
+    .toggle-btn {
+      background: none;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
 
-        .day-cell {
-            padding: 0.75rem;
-            background: var(--gray-50);
-            border-radius: 8px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+    .toggle-btn:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-primary); }
 
-        .day-cell:hover {
-            background: var(--gray-100);
-        }
+    /* === WEEKLY DATA (Initially Hidden) === */
+    .weekly-data {
+      display: none;
+      margin-top: 15px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 10px;
+    }
 
-        .day-cell.today {
-            background: var(--primary);
-            color: white;
-        }
+    .weekly-data.show { display: block; }
 
-        .day-cell.has-log::after {
-            content: '';
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--success);
-            display: block;
-            margin: 0.25rem auto;
-        }
+    .weekly-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 15px;
+    }
 
-        .day-number {
-            font-weight: 600;
-            font-size: 1.125rem;
-        }
+    .day-card {
+      text-align: center;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+    }
 
-        .day-hours {
-            font-size: 0.75rem;
-            margin-top: 0.25rem;
-        }
+    .day-name { font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; }
+    .day-value { font-size: 24px; font-weight: bold; color: var(--accent-green); }
+    .day-best { position: absolute; top: -8px; right: -8px; background: var(--led-orange); border-radius: 10px; padding: 2px 6px; font-size: 9px; }
 
-        /* Day Detail Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
+    /* === MANUAL ENTRY FORM (Initially Hidden) === */
+    .manual-entry-form {
+      display: none;
+      margin-top: 15px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 10px;
+    }
 
-        .modal-overlay.active {
-            display: flex;
-        }
+    .manual-entry-form.show { display: block; }
 
-        .modal {
-            background: white;
-            border-radius: 20px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 85vh;
-            overflow-y: auto;
-        }
+    .form-row { margin-bottom: 12px; }
+    .form-row label { display: block; color: var(--text-secondary); font-size: 13px; margin-bottom: 5px; }
+    .form-row input, .form-row select { width: 100%; padding: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-color); color: var(--text-primary); }
 
-        .modal-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--gray-100);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    /* === NOTES SECTION === */
+    .notes-section { margin-top: 15px; }
+    .notes-input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-size: 14px;
+      resize: vertical;
+    }
 
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--gray-400);
-        }
+    /* === RESET MODAL === */
+    .reset-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
 
-        .modal-body {
-            padding: 1.5rem;
-        }
+    .reset-modal.show { display: flex; }
 
-        /* Mentor Nudge */
-        .nudge-card {
-            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
-            border: 2px solid var(--warning);
-        }
+    .modal-content {
+      background: var(--panel-bg);
+      border-radius: 16px;
+      padding: 30px;
+      max-width: 450px;
+      text-align: center;
+    }
 
-        .nudge-header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 0.75rem;
-        }
-
-        .nudge-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--warning);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-
-        /* Insights */
-        .insight-card {
-            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-            border-left: 4px solid var(--success);
-        }
-
-        .insight-header {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        /* Quick Log */
-        .quick-log-form {
-            display: flex;
-            gap: 0.75rem;
-            margin-top: 1rem;
-        }
-
-        .form-select, .form-input {
-            padding: 0.625rem 1rem;
-            border: 2px solid var(--gray-200);
-            border-radius: 8px;
-            font-size: 0.9375rem;
-            background: white;
-        }
-
-        .form-select:focus, .form-input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        /* Empty States */
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: var(--gray-400);
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .main-container {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Utility Classes */
-        .text-sm { font-size: 0.875rem; }
-        .text-xs { font-size: 0.75rem; }
-        .font-bold { font-weight: 600; }
-        .flex { display: flex; }
-        .items-center { align-items: center; }
-        .justify-between { justify-content: space-between; }
-        .gap-2 { gap: 0.5rem; }
-        .mb-2 { margin-bottom: 0.5rem; }
-        .hidden { display: none !important; }
-    </style>
+    /* === RESPONSIVE === */
+    @media (max-width: 768px) {
+      .timer-display { font-size: 80px; letter-spacing: 4px; }
+      .ticker-bar { gap: 15px; padding: 10px 20px; }
+      .container { padding: 15px; }
+    }
+  </style>
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="logo">
-            <div class="logo-icon">🧭</div>
-            Faculty Time Compass
-        </div>
-        <div class="header-actions">
-            <button class="btn btn-secondary" onclick="app.exportData()">Export Data</button>
-            <button class="btn btn-secondary" onclick="app.resetData()">Reset All</button>
-        </div>
-    </header>
 
-    <!-- Main Container -->
-    <main class="main-container">
-        <!-- Left Column: Timer & Categories -->
-        <aside>
-            <!-- Timer Section -->
-            <div class="card timer-section">
-                <h2 class="card-title" style="text-align: center; margin-bottom: 1rem;">⏱️ Timer</h2>
-                
-                <div class="timer-status">
-                    <span class="status-dot" id="statusDot"></span>
-                    <span class="font-bold" id="timerStatusText">Inactive</span>
-                </div>
+<!-- TICKER BAR -->
+<div class="ticker-bar" id="tickerBar">
+  <div class="ticker-item"><span class="ticker-label">Calls Today</span><span class="ticker-value" id="callsToday">0</span></div>
+  <div class="ticker-item"><span class="ticker-label">Time Spent</span><span class="ticker-value" id="timeSpent">0m</span></div>
+  <div class="ticker-item"><span class="ticker-label">Prospects</span><span class="ticker-value" id="prospectsCount">0</span></div>
+  <div class="ticker-item"><span class="ticker-label">$ Assets (Today)</span><span class="ticker-value" id="assetsReceived">$0</span></div>
+  <div class="ticker-item"><span class="ticker-label">$ Pending</span><span class="ticker-value negative" id="assetsPending">$0</span></div>
+  <div class="ticker-item"><span class="ticker-label">Streak</span><span class="ticker-value" id="streakCount">🔥0</span></div>
+  <div class="ticker-item"><span class="ticker-label">Today vs Avg</span><span class="ticker-value" id="todayVsAvg">vs 0 calls</span><span class="ticker-trend" id="trendArrow"></span></div>
+</div>
 
-                <div class="timer-display" id="timerDisplay">00:00:00</div>
+<div class="container">
 
-                <div class="timer-controls">
-                    <button class="btn btn-primary" id="startTimerBtn" onclick="app.toggleTimer()">
-                        ▶ Start Timer
-                    </button>
-                    <button class="btn btn-secondary" onclick="app.addQuickLog()">
-                        ⏰ Quick Log
-                    </button>
-                </div>
+<!-- TIMER SECTION -->
+<div class="timer-section">
+  <div class="timer-display" id="timerDisplay">00:00:00</div>
+  
+  <div class="category-selector" id="categorySelector"></div>
+  
+  <div class="anxiety-section">
+    <span class="anxiety-label">Pre-Call Anxiety (1-5):</span>
+    <div class="rating-buttons" id="preAnxietyButtons"></div>
+  </div>
 
-                <p class="text-sm text-gray-400 mt-3">
-                    Timer runs in background even if you close this tab
-                </p>
-            </div>
+  <div style="margin-bottom: 20px;">
+    <input type="text" class="form-input" id="notesInput" placeholder="Quick notes after call... (optional)" style="width: 100%; max-width: 400px; text-align: center;">
+  </div>
 
-            <!-- Categories -->
-            <div class="card" style="margin-top: 1.5rem;">
-                <div class="card-header">
-                    <h2 class="card-title">📊 Your Categories</h2>
-                    <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;" onclick="app.showCategoryModal()">+ Add</button>
-                </div>
-                
-                <div class="category-list" id="categoryList">
-                    <!-- Categories rendered here -->
-                </div>
+  <div class="timer-controls">
+    <button class="btn btn-primary" id="startBtn">START</button>
+    <button class="btn btn-secondary" id="stopBtn" disabled>STOP</button>
+    <button class="btn btn-danger" id="resetBtn">RESET</button>
+  </div>
 
-                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--gray-100);">
-                    <h3 class="text-sm font-bold mb-2">Year-End Targets</h3>
-                    <button class="btn btn-secondary" style="width: 100%;" onclick="app.showTargetModal()">🎯 Set Annual Goals</button>
-                </div>
-            </div>
+  <!-- Manual Entry Toggle -->
+  <div style="margin-top: 15px;">
+    <button class="toggle-btn" onclick="document.getElementById('manualEntryForm').classList.toggle('show')">➕ Log Time Manually</button>
+    
+    <!-- Manual Entry Form -->
+    <div class="manual-entry-form" id="manualEntryForm">
+      <h3 style="margin-bottom: 15px; color: var(--accent-blue);">Manual Time Entry</h3>
+      
+      <div class="form-row">
+        <label>Duration (minutes)</label>
+        <input type="number" id="manualMinutes" min="1" placeholder="e.g., 25">
+      </div>
 
-            <!-- Insights -->
-            <div class="card insight-card" style="margin-top: 1.5rem;">
-                <div class="insight-header">
-                    <span>💡 Insight of the Day</span>
-                </div>
-                <p id="dailyInsight" class="text-sm">Click "Quick Log" or start a timer to generate your first insight!</p>
-            </div>
+      <div class="form-row">
+        <label>Category</label>
+        <select id="manualCategory"></select>
+      </div>
 
-            <!-- Mentor Nudge -->
-            <div class="card nudge-card hidden" id="mentorNudge">
-                <div class="nudge-header">
-                    <div class="nudge-icon">💬</div>
-                    <span class="font-bold text-gray-700">Growth Opportunity</span>
-                </div>
-                <p class="text-sm" id="mentorNudgeText" style="margin-bottom: 1rem;">
-                    Your research trajectory is at 62% with 15 weeks remaining.
-                </p>
-                <button class="btn btn-secondary" style="width: 100%; font-size: 0.875rem;" onclick="app.dismissNudge()">
-                    Remind Me Later
-                </button>
-            </div>
-        </aside>
-
-        <!-- Right Column: Trajectory & Week View -->
-        <section>
-            <!-- Trajectory Grid -->
-            <div class="trajectory-grid">
-                <!-- Clinical Progress -->
-                <div class="card progress-ring-container">
-                    <div class="flex justify-between mb-2">
-                        <span class="font-bold" style="color: var(--clinical);">🩺 Clinical Practice</span>
-                        <span class="text-sm font-bold" id="clinicalProgressText">0%</span>
-                    </div>
-                    <svg class="progress-ring" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
-                        <circle id="clinicalProgressRing" cx="50" cy="50" r="45" fill="none" 
-                                stroke="var(--clinical)" stroke-width="8" 
-                                stroke-dasharray="283" stroke-dashoffset="283"
-                                transform="rotate(-90 50 50)"/>
-                    </svg>
-                    <div class="text-sm text-gray-500">Yearly Goal</div>
-                </div>
-
-                <!-- Research Progress -->
-                <div class="card progress-ring-container">
-                    <div class="flex justify-between mb-2">
-                        <span class="font-bold" style="color: var(--research);">🔬 Research & Scholarship</span>
-                        <span class="text-sm font-bold" id="researchProgressText">0%</span>
-                    </div>
-                    <svg class="progress-ring" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
-                        <circle id="researchProgressRing" cx="50" cy="50" r="45" fill="none" 
-                                stroke="var(--research)" stroke-width="8" 
-                                stroke-dasharray="283" stroke-dashoffset="283"
-                                transform="rotate(-90 50 50)"/>
-                    </svg>
-                    <div class="text-sm text-gray-500">Yearly Goal</div>
-                </div>
-
-                <!-- Education Progress -->
-                <div class="card progress-ring-container">
-                    <div class="flex justify-between mb-2">
-                        <span class="font-bold" style="color: var(--education);">📚 Education & Teaching</span>
-                        <span class="text-sm font-bold" id="educationProgressText">0%</span>
-                    </div>
-                    <svg class="progress-ring" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
-                        <circle id="educationProgressRing" cx="50" cy="50" r="45" fill="none" 
-                                stroke="var(--education)" stroke-width="8" 
-                                stroke-dasharray="283" stroke-dashoffset="283"
-                                transform="rotate(-90 50 50)"/>
-                    </svg>
-                    <div class="text-sm text-gray-500">Yearly Goal</div>
-                </div>
-
-                <!-- Admin Progress -->
-                <div class="card progress-ring-container">
-                    <div class="flex justify-between mb-2">
-                        <span class="font-bold" style="color: var(--admin);">📋 Administration</span>
-                        <span class="text-sm font-bold" id="adminProgressText">0%</span>
-                    </div>
-                    <svg class="progress-ring" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
-                        <circle id="adminProgressRing" cx="50" cy="50" r="45" fill="none" 
-                                stroke="var(--admin)" stroke-width="8" 
-                                stroke-dasharray="283" stroke-dashoffset="283"
-                                transform="rotate(-90 50 50)"/>
-                    </svg>
-                    <div class="text-sm text-gray-500">Yearly Goal</div>
-                </div>
-            </div>
-
-            <!-- Weekly View -->
-            <div class="week-view" style="margin-top: 2rem;">
-                <h2 class="card-title mb-2">📅 Week of <span id="currentWeekLabel"></span></h2>
-                
-                <div class="day-grid" id="dayGrid">
-                    <!-- Days rendered here -->
-                </div>
-
-                <!-- Day Summary -->
-                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--gray-100);">
-                    <h3 class="text-sm font-bold mb-2">Today's Summary</h3>
-                    <div id="todaySummary" class="text-sm text-gray-500">
-                        No sessions logged yet today. Start your first timer!
-                    </div>
-                </div>
-
-                <!-- Recommendations -->
-                <div style="margin-top: 1rem; padding: 1rem; background: #f0fdf4; border-radius: 8px;">
-                    <h3 class="text-sm font-bold mb-1">💡 Quick Recommendation</h3>
-                    <p id="quickRecommendation" class="text-sm text-gray-600">
-                        Log your first session to see personalized recommendations!
-                    </p>
-                </div>
-            </div>
-
-            <!-- Analytics Section -->
-            <div class="card" style="margin-top: 2rem;">
-                <h2 class="card-title mb-3">📊 Weekly Breakdown</h2>
-                <canvas id="analyticsChart" width="500" height="200"></canvas>
-            </div>
-        </section>
-    </main>
-
-    <!-- Day Detail Modal -->
-    <div class="modal-overlay" id="dayModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="font-bold" id="modalDayTitle">Monday, January 15</h3>
-                <button class="modal-close" onclick="app.closeDayModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <h4 class="text-sm font-bold mb-2 text-gray-600">Sessions Today</h4>
-                
-                <div id="daySessionList">
-                    <!-- Sessions rendered here -->
-                </div>
-
-                <button class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;" onclick="app.addSessionToDay()">
-                    + Add Session
-                </button>
-
-                <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--gray-200);">
-                
-                <h4 class="text-sm font-bold mb-2 text-gray-600">📊 Gap Analysis</h4>
-                <div id="gapAnalysis"></div>
-            </div>
-        </div>
+      <button class="btn btn-primary" onclick="addManualEntry()">Log Entry</button>
     </div>
+  </div>
+</div>
 
-    <!-- Category Modal -->
-    <div class="modal-overlay" id="categoryModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="font-bold">Add New Category</h3>
-                <button class="modal-close" onclick="app.closeCategoryModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="categoryForm" onsubmit="app.saveCategory(event)">
-                    <div style="margin-bottom: 1rem;">
-                        <label class="text-sm font-bold text-gray-600 mb-1 block">Category Name</label>
-                        <input type="text" name="name" required class="form-input" placeholder="e.g., Patient Care, Writing Committee Work">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label class="text-sm font-bold text-gray-600 mb-1 block">Annual Target Hours</label>
-                        <input type="number" name="target" required class="form-input" placeholder="e.g., 500">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label class="text-sm font-bold text-gray-600 mb-1 block">Color</label>
-                        <select name="color" class="form-select" id="categoryColorSelect">
-                            <option value="#4CAF50">Green (Clinical)</option>
-                            <option value="#FF9800">Orange (Research)</option>
-                            <option value="#2196F3">Blue (Education)</option>
-                            <option value="#9C27B0">Purple (Admin)</option>
-                            <option value="#EF4444">Red (Other)</option>
-                        </select>
-                    </div>
-                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                        <button type="button" class="btn btn-secondary" onclick="app.closeCategoryModal()">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Add Category</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+<!-- INSIGHTS PANEL -->
+<div class="insights-panel">
+  <div class="insights-title">💡 Mentor Insight</div>
+  <div class="insight-content" id="insightContent"></div>
+</div>
+
+<!-- DAILY LOG -->
+<div class="daily-log">
+  <div class="log-header">
+    <span class="log-title">Today's Calls</span>
+    <button class="toggle-btn" onclick="document.getElementById('weeklyData').classList.toggle('show')">📅 View Weekly Summary</button>
+  </div>
+
+  <!-- Weekly Data -->
+  <div class="weekly-data" id="weeklyData"></div>
+
+  <!-- Call Entries Container -->
+  <div id="callEntriesContainer"></div>
+
+  <!-- Add Category Form -->
+  <div class="add-category-form">
+    <input type="text" class="form-input" id="newCategoryInput" placeholder="New category name..." style="flex: 1;">
+    <button class="btn btn-secondary" onclick="addCategory()">Add</button>
+    <button class="btn btn-danger" onclick="resetBenchmarks()" title="Reset all high scores">🔄 Reset High Scores</button>
+  </div>
+</div>
+
+<!-- RESET MODAL -->
+<div class="reset-modal" id="resetModal">
+  <div class="modal-content">
+    <h2 style="margin-bottom: 15px;">Reset Benchmarks?</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 20px;">This will clear all high scores and averages. You can't undo this.</p>
+    <div style="display: flex; gap: 15px; justify-content: center;">
+      <button class="btn btn-primary" onclick="confirmReset()">Yes, Reset</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
     </div>
+  </div>
+</div>
 
-    <!-- Target Modal -->
-    <div class="modal-overlay" id="targetModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="font-bold">Set Year-End Targets</h3>
-                <button class="modal-close" onclick="app.closeTargetModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="targetForm" onsubmit="app.saveTargets(event)">
-                    <div style="margin-bottom: 1rem;">
-                        <label class="text-sm font-bold text-gray-600 mb-1 block">Clinical Hours</label>
-                        <input type="number" name="clinical" required class="form-input" placeholder="e.g., 1000">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label class="text-sm font-bold text-gray-600 mb-1 block">Research Hours</label>
-                        <input type="number" name="research" required class="form-input" placeholder="e.g., 200">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label class="text-sm font-bold text-gray-600 mb-1 block">Education Hours</label>
-                        <input type="number" name="education" required class="form-input" placeholder="e.g., 300">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label class="text-sm font-bold text-gray-600 mb-1 block">Admin Hours</label>
-                        <input type="number" name="admin" required class="form-input" placeholder="e.g., 400">
-                    </div>
-                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                        <button type="button" class="btn btn-secondary" onclick="app.closeTargetModal()">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save Targets</button>
-                    </div>
-                </form>
-            </div>
+</div>
+
+<script>
+/**
+ * ADVISORFLOW - Call Tracking App
+ * Built with: Vanilla JS + LocalStorage
+ * Features: Timer, Categories, Anxiety Tracking, Insights, High Scores
+ */
+
+// === STATE MANAGEMENT ===
+const appState = {
+  categories: ['Phone Calls', 'Appts', 'Research', 'CE', 'Other'],
+  activeCategory: 'Phone Calls',
+  
+  timer: {
+    running: false,
+    startTime: null,
+    elapsedSeconds: 0,
+    intervalId: null
+  },
+
+  currentCall: {
+    preAnxiety: null,
+    postEase: null,
+    notes: '',
+    prospectsLogged: 0,
+    assetsPendingValue: 0,
+    assetsReceivedValue: 0
+  },
+
+  dailyLogs: [],
+  
+  benchmarks: {
+    bestDayCalls: 0,
+    avgDailyCalls: 0,
+    lastResetDate: null
+  }
+};
+
+// === DOM ELEMENTS ===
+const elements = {
+  timerDisplay: document.getElementById('timerDisplay'),
+  startBtn: document.getElementById('startBtn'),
+  stopBtn: document.getElementById('stopBtn'),
+  resetBtn: document.getElementById('resetBtn'),
+  
+  categorySelector: document.getElementById('categorySelector'),
+  preAnxietyButtons: document.getElementById('preAnxietyButtons'),
+  notesInput: document.getElementById('notesInput'),
+  
+  callEntriesContainer: document.getElementById('callEntriesContainer'),
+  
+  tickerBar: {
+    callsToday: document.getElementById('callsToday'),
+    timeSpent: document.getElementById('timeSpent'),
+    prospectsCount: document.getElementById('prospectsCount'),
+    assetsReceived: document.getElementById('assetsReceived'),
+    assetsPending: document.getElementById('assetsPending'),
+    streakCount: document.getElementById('streakCount'),
+    todayVsAvg: document.getElementById('todayVsAvg'),
+    trendArrow: document.getElementById('trendArrow')
+  },
+
+  insightContent: document.getElementById('insightContent'),
+  
+  manualEntryForm: {
+    show: () => document.getElementById('manualEntryForm').classList.add('show'),
+    hide: () => document.getElementById('manualEntryForm').classList.remove('show'),
+    minutes: document.getElementById('manualMinutes'),
+    category: document.getElementById('manualCategory')
+  },
+
+  weeklyData: document.getElementById('weeklyData'),
+  resetModal: document.getElementById('resetModal')
+};
+
+// === INITIALIZATION ===
+function init() {
+  loadData();
+  renderCategories();
+  renderAnxietyButtons();
+  renderCallEntries();
+  updateTicker();
+  generateInsight();
+  
+  // Event Listeners
+  elements.startBtn.addEventListener('click', startTimer);
+  elements.stopBtn.addEventListener('click', stopTimer);
+  elements.resetBtn.addEventListener('click', resetTimer);
+  
+  document.getElementById('newCategoryInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') addCategory();
+  });
+}
+
+// === LOCAL STORAGE ===
+function loadData() {
+  const saved = localStorage.getItem('advisorflow_data');
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    appState.categories = parsed.categories || appState.categories;
+    appState.activeCategory = parsed.activeCategory || appState.activeCategory;
+    appState.dailyLogs = parsed.dailyLogs || [];
+    appState.benchmarks = parsed.benchmarks || appState.benchmarks;
+  }
+}
+
+function saveData() {
+  const data = {
+    categories: appState.categories,
+    activeCategory: appState.activeCategory,
+    dailyLogs: appState.dailyLogs,
+    benchmarks: appState.benchmarks
+  };
+  localStorage.setItem('advisorflow_data', JSON.stringify(data));
+}
+
+// === TIMER FUNCTIONS ===
+function startTimer() {
+  if (appState.timer.running) return;
+  
+  appState.timer.running = true;
+  appState.timer.startTime = Date.now();
+  
+  elements.startBtn.disabled = true;
+  elements.stopBtn.disabled = false;
+  elements.resetBtn.disabled = true;
+  
+  updateTickerDisplay(); // Show "In Progress" state
+  
+  appState.timer.intervalId = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - (appState.timer.startTime || Date.now())) / 1000);
+    appState.timer.elapsedSeconds += 1;
+    formatTimerDisplay(elapsed + appState.timer.elapsedSeconds);
+    updateTickerDisplay();
+  }, 1000);
+
+  playClickSound('start');
+}
+
+function stopTimer() {
+  if (!appState.timer.running) return;
+  
+  clearInterval(appState.timer.intervalId);
+  appState.timer.running = false;
+  
+  // Save call entry
+  saveCallEntry();
+  
+  elements.startBtn.disabled = false;
+  elements.stopBtn.disabled = true;
+  elements.resetBtn.disabled = false;
+  
+  playClickSound('stop');
+}
+
+function resetTimer() {
+  clearInterval(appState.timer.intervalId);
+  appState.timer.running = false;
+  appState.timer.elapsedSeconds = 0;
+  appState.currentCall.preAnxiety = null;
+  
+  formatTimerDisplay(0);
+  updateTicker();
+  
+  elements.startBtn.disabled = false;
+  elements.stopBtn.disabled = true;
+  elements.resetBtn.disabled = false;
+  
+  playClickSound('reset');
+}
+
+function formatTimerDisplay(totalSeconds) {
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  
+  elements.timerDisplay.textContent = 
+    `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
+function updateTickerDisplay() {
+  const totalSeconds = appState.timer.elapsedSeconds;
+  elements.tickerBar.timeSpent.textContent = formatTime(totalSeconds);
+}
+
+// === CALL ENTRY FUNCTIONS ===
+function saveCallEntry() {
+  if (appState.timer.elapsedSeconds <= 0) return;
+  
+  const today = new Date().toISOString().split('T')[0];
+  
+  const callEntry = {
+    id: Date.now(),
+    date: today,
+    startTime: appState.currentCall.startTime || null,
+    durationMinutes: Math.round(appState.timer.elapsedSeconds / 60),
+    category: appState.activeCategory,
+    preAnxiety: appState.currentCall.preAnxiety,
+    postEase: appState.postEase, // This should be set before stopping!
+    notes: elements.notesInput.value,
+    prospectsLogged: appState.currentCall.prospectsLogged,
+    assetsPendingValue: appState.currentCall.assetsPendingValue,
+    assetsReceivedValue: appState.currentCall.assetsReceivedValue
+  };
+  
+  appState.dailyLogs.unshift(callEntry);
+  saveData();
+  renderCallEntries();
+  updateTicker();
+  generateInsight();
+}
+
+function addManualEntry() {
+  const minutes = parseInt(elements.manualEntryForm.minutes.value);
+  if (!minutes || minutes < 1) {
+    alert('Please enter a valid duration');
+    return;
+  }
+  
+  const category = elements.manualEntryForm.category.value;
+  
+  const callEntry = {
+    id: Date.now(),
+    date: new Date().toISOString().split('T')[0],
+    startTime: null,
+    durationMinutes: minutes,
+    category: category,
+    preAnxiety: 3, // Default for manual entry
+    postEase: 3,
+    notes: '',
+    prospectsLogged: 0,
+    assetsPendingValue: 0,
+    assetsReceivedValue: 0
+  };
+  
+  appState.dailyLogs.unshift(callEntry);
+  saveData();
+  renderCallEntries();
+  updateTicker();
+  
+  elements.manualEntryForm.hide();
+}
+
+function addCategory() {
+  const input = document.getElementById('newCategoryInput');
+  const name = input.value.trim();
+  
+  if (!name || appState.categories.includes(name)) return;
+  
+  appState.categories.push(name);
+  appState.activeCategory = name;
+  saveData();
+  renderCategories();
+  updateTicker();
+  
+  input.value = '';
+}
+
+function removeCategory(category) {
+  if (appState.categories.length <= 1) {
+    alert('You need at least one category');
+    return;
+  }
+  
+  if (!confirm(`Delete "${category}"? This will not delete past entries using this category.`)) return;
+  
+  appState.categories = appState.categories.filter(c => c !== category);
+  saveData();
+  renderCategories();
+}
+
+// === RENDER FUNCTIONS ===
+function renderCategories() {
+  elements.categorySelector.innerHTML = '';
+  
+  appState.categories.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = `cat-btn ${appState.activeCategory === cat ? 'active' : ''}`;
+    btn.textContent = cat;
+    btn.onclick = () => selectCategory(cat);
+    
+    if (cat !== appState.categories[0]) { // Keep at least one
+      const deleteBtn = document.createElement('span');
+      deleteBtn.innerHTML = '&times;';
+      deleteBtn.style.cssText = 'margin-left: 8px; cursor: pointer; color: var(--led-red);';
+      deleteBtn.onclick = (e) => { e.stopPropagation(); removeCategory(cat); };
+      btn.appendChild(deleteBtn);
+    }
+    
+    elements.categorySelector.appendChild(btn);
+  });
+  
+  // Also populate manual entry dropdown
+  elements.manualEntryForm.category.innerHTML = appState.categories.map(c => 
+    `<option value="${c}">${c}</option>`
+  ).join('');
+}
+
+function selectCategory(category) {
+  appState.activeCategory = category;
+  saveData();
+  renderCategories();
+}
+
+function renderAnxietyButtons() {
+  elements.preAnxietyButtons.innerHTML = '';
+  
+  for (let i = 1; i <= 5; i++) {
+    const btn = document.createElement('button');
+    btn.className = `rating-btn ${appState.currentCall.preAnxiety === i ? 'selected' : ''}`;
+    btn.textContent = i;
+    btn.onclick = () => selectPreAnxiety(i);
+    elements.preAnxietyButtons.appendChild(btn);
+  }
+}
+
+function selectPreAnxiety(value) {
+  appState.currentCall.preAnxiety = value;
+  renderAnxietyButtons();
+}
+
+function renderCallEntries() {
+  const today = new Date().toISOString().split('T')[0];
+  const todaysCalls = appState.dailyLogs.filter(log => log.date === today);
+  
+  elements.callEntriesContainer.innerHTML = '';
+  
+  if (todaysCalls.length === 0) {
+    elements.callEntriesContainer.innerHTML = `
+      <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+        No calls logged today. Start the timer to log your first one!
+      </div>
+    `;
+    return;
+  }
+  
+  todaysCalls.forEach(call => {
+    const entry = document.createElement('div');
+    entry.className = 'call-entry';
+    
+    let anxietyDisplay = call.preAnxiety ? 
+      `<span class="call-meta">📊 Pre-Anxiety: ${call.preAnxiety}/5</span>` : '';
+    
+    let postEaseDisplay = call.postEase ? 
+      `<span class="call-meta">😊 Post-Ease: ${call.postEase}/5</span>` : '';
+    
+    entry.innerHTML = `
+      <div class="call-header">
+        <div>
+          <strong>${call.category}</strong>
+          <div class="call-time">${formatTime(call.durationMinutes * 60)} • ${new Date().toLocaleTimeString()}</div>
         </div>
-    </div>
-
-    <!-- Quick Log Modal -->
-    <div class="modal-overlay" id="quickLogModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="font-bold">Quick Time Entry</h3>
-                <button class="modal-close" onclick="app.closeQuickLogModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="quickLogForm" onsubmit="app.saveQuickLog(event)">
-                    <input type="hidden" name="date" value="">
-                    <div style="margin-bottom: 1rem;">
-                        <label class="text-sm font-bold text-gray-600 mb-1 block">Category</label>
-                        <select name="category" required id="quickLogCategory" class="form-select"></select>
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label class="text-sm font-bold text-gray-600 mb-1 block">Hours</label>
-                        <input type="number" name="hours" step="0.25" required class="form-input" placeholder="e.g., 4.5">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label class="text-sm font-bold text-gray-600 mb-1 block">Notes (optional)</label>
-                        <input type="text" name="notes" class="form-input" placeholder="e.g., Morning clinic, journal writing">
-                    </div>
-                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                        <button type="button" class="btn btn-secondary" onclick="app.closeQuickLogModal()">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save Entry</button>
-                    </div>
-                </form>
-            </div>
+        <div style="text-align: right;">
+          <span class="ticker-value">$${call.assetsReceivedValue.toLocaleString()}</span>
         </div>
+      </div>
+      <div class="call-meta" style="margin-bottom: 5px;">
+        ${anxietyDisplay}
+        ${postEaseDisplay}
+      </div>
+      ${call.prospectsLogged > 0 ? `<div class="call-meta">📈 ${call.prospectsLogged} prospect(s)</div>` : ''}
+      ${call.notes ? `<div class="call-note">"${call.notes}"</div>` : ''}
+    `;
+    
+    elements.callEntriesContainer.appendChild(entry);
+  });
+  
+  // Weekly Summary
+  renderWeeklyData();
+}
+
+function renderWeeklyData() {
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+  
+  const weekLogs = appState.dailyLogs.filter(log => 
+    new Date(log.date) >= sevenDaysAgo
+  );
+  
+  const weekData = {};
+  for (let i = 0; i < 7; i++) {
+    const date = new Date();
+    date.setDate(date.getDate() - (6 - i));
+    const dateStr = date.toISOString().split('T')[0];
+    
+    weekData[dateStr] = {
+      name: date.toLocaleDateString('en-US', { weekday: 'short' }),
+      calls: 0,
+      time: 0,
+      revenue: 0
+    };
+    
+    const dayLogs = weekLogs.filter(log => log.date === dateStr);
+    weekData[dateStr].calls = dayLogs.length;
+    weekData[dateStr].time = dayLogs.reduce((sum, l) => sum + l.durationMinutes, 0);
+    weekData[dateStr].revenue = dayLogs.reduce((sum, l) => sum + (l.assetsReceivedValue || 0), 0);
+  }
+  
+  elements.weeklyData.innerHTML = `
+    <div class="weekly-grid">
+      ${Object.values(weekData).map(day => {
+        const isBest = day.calls === appState.benchmarks.bestDayCalls && day.calls > 0;
+        return `
+          <div style="position: relative;">
+            ${isBest ? '<span class="day-best">🏆 Best</span>' : ''}
+            <div class="day-name">${day.name}</div>
+            <div class="day-value">${day.calls}</div>
+            <small>${formatTime(day.time * 60)}</small>
+          </div>
+        `;
+      }).join('')}
     </div>
-
-    <!-- JavaScript Application -->
-    <script>
-        class FacultyTimeCompass {
-            constructor() {
-                this.state = {
-                    timer: { active: false, startTime: null, elapsed: 0, category: null },
-                    categories: [],
-                    targets: {},
-                    logs: {}, // date -> array of entries
-                    insights: []
-                };
-
-                this.init();
-            }
-
-            init() {
-                this.loadData();
-                this.setupEventListeners();
-                this.renderAll();
-                
-                // Start timer tick if active
-                if (this.state.timer.active) {
-                    this.startTimerTick();
-                }
-
-                // Check for mentor nudge conditions
-                this.checkMentorNudge();
-
-                // Save data periodically
-                setInterval(() => this.saveData(), 30000);
-            }
-
-            loadData() {
-                const saved = localStorage.getItem('facultyTimeCompass');
-                if (saved) {
-                    this.state = JSON.parse(saved);
-                } else {
-                    // Initialize with default categories and targets
-                    this.initializeDefaultState();
-                }
-            }
-
-            initializeDefaultState() {
-                this.state.categories = [
-                    { id: 'clinical', name: 'Clinical Practice', target: 1000, color: '#4CAF50' },
-                    { id: 'research', name: 'Research & Scholarship', target: 200, color: '#FF9800' },
-                    { id: 'education', name: 'Education & Teaching', target: 300, color: '#2196F3' },
-                    { id: 'admin', name: 'Administration', target: 400, color: '#9C27B0' }
-                ];
-
-                this.state.targets = {
-                    clinical: 1000,
-                    research: 200,
-                    education: 300,
-                    admin: 400
-                };
-
-                this.saveData();
-            }
-
-            saveData() {
-                localStorage.setItem('facultyTimeCompass', JSON.stringify(this.state));
-            }
-
-            setupEventListeners() {
-                // Handle visibility change to pause timer notification
-                document.addEventListener('visibilitychange', () => {
-                    if (document.hidden && this.state.timer.active) {
-                        console.log('Page hidden, timer continuing in background');
-                    }
-                });
-
-                // Handle page unload - try to save final state
-                window.addEventListener('beforeunload', () => {
-                    if (this.state.timer.active) {
-                        const duration = Math.floor((Date.now() - this.state.timer.startTime + this.state.timer.elapsed * 1000) / 60000);
-                        console.log(`Timer active: ${duration} minutes`);
-                    }
-                });
-            }
-
-            // ==================== TIMER FUNCTIONS ====================
-
-            toggleTimer() {
-                if (this.state.timer.active) {
-                    this.stopTimer();
-                } else {
-                    this.startTimer();
-                }
-            }
-
-            startTimer() {
-                const categorySelect = document.getElementById('quickLogCategory');
-                if (!categorySelect.value) {
-                    alert('Please select a category first!');
-                    return;
-                }
-
-                const selectedCategory = this.state.categories.find(c => c.id === categorySelect.value);
-                
-                this.state.timer = {
-                    active: true,
-                    startTime: Date.now(),
-                    elapsed: 0,
-                    category: selectedCategory.id
-                };
-
-                this.saveData();
-                this.startTimerTick();
-                this.renderAll();
-            }
-
-            startTimerTick() {
-                if (!this.state.timer.active) return;
-
-                const tick = () => {
-                    if (this.state.timer.active) {
-                        const now = Date.now();
-                        const elapsedMs = now - this.state.timer.startTime + this.state.timer.elapsed * 1000;
-                        this.state.timer.elapsed = Math.floor(elapsedMs / 1000);
-                        this.updateTimerDisplay();
-                    } else {
-                        return;
-                    }
-
-                    // Save every tick to ensure persistence
-                    if (Date.now() % 60000 < 1000) { // Every minute-ish
-                        this.saveData();
-                    }
-                };
-
-                tick();
-                setInterval(tick, 1000);
-            }
-
-            stopTimer() {
-                const durationMinutes = Math.floor((Date.now() - this.state.timer.startTime + this.state.timer.elapsed * 1000) / 60000);
-                
-                if (durationMinutes < 5) {
-                    // Too short, just abort
-                    this.state.timer.active = false;
-                    this.saveData();
-                    this.renderAll();
-                    return;
-                }
-
-                // Log the session
-                const dateStr = new Date().toISOString().split('T')[0];
-                
-                if (!this.state.logs[dateStr]) {
-                    this.state.logs[dateStr] = [];
-                }
-
-                this.state.logs[dateStr].push({
-                    id: Date.now(),
-                    category: this.state.timer.category,
-                    start_time: new Date(this.state.timer.startTime).toISOString(),
-                    duration_minutes: durationMinutes,
-                    type: 'timer'
-                });
-
-                // Reset timer
-                this.state.timer = { active: false, startTime: null, elapsed: 0, category: null };
-                
-                this.saveData();
-                this.renderAll();
-                this.checkMentorNudge();
-            }
-
-            updateTimerDisplay() {
-                const totalSeconds = this.state.timer.elapsed;
-                const hours = Math.floor(totalSeconds / 3600);
-                const minutes = Math.floor((totalSeconds % 3600) / 60);
-                const seconds = totalSeconds % 60;
-
-                document.getElementById('timerDisplay').textContent = 
-                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-                const statusDot = document.getElementById('statusDot');
-                const statusText = document.getElementById('timerStatusText');
-                const startBtn = document.getElementById('startTimerBtn');
-
-                if (this.state.timer.active) {
-                    statusDot.classList.add('active');
-                    statusText.textContent = 'Running';
-                    startBtn.innerHTML = '⏸ Pause Timer';
-                    startBtn.className = 'btn btn-danger';
-                } else {
-                    statusDot.classList.remove('active');
-                    statusText.textContent = 'Inactive';
-                    startBtn.innerHTML = '▶ Start Timer';
-                    startBtn.className = 'btn btn-primary';
-                }
-            }
-
-            // ==================== QUICK LOG FUNCTIONS ====================
-
-            addQuickLog() {
-                const categorySelect = document.getElementById('quickLogCategory');
-                categorySelect.innerHTML = '';
-                
-                this.state.categories.forEach(cat => {
-                    const option = document.createElement('option');
-                    option.value = cat.id;
-                    option.textContent = `${cat.name}`;
-                    categorySelect.appendChild(option);
-                });
-
-                // Set today's date
-                document.querySelector('[name="date"]').value = new Date().toISOString().split('T')[0];
-
-                document.getElementById('quickLogModal').classList.add('active');
-            }
-
-            saveQuickLog(e) {
-                e.preventDefault();
-                
-                const formData = new FormData(e.target);
-                const dateStr = formData.get('date');
-                const category = formData.get('category');
-                const hours = parseFloat(formData.get('hours'));
-                const notes = formData.get('notes') || '';
-
-                if (!this.state.logs[dateStr]) {
-                    this.state.logs[dateStr] = [];
-                }
-
-                this.state.logs[dateStr].push({
-                    id: Date.now(),
-                    category,
-                    duration_minutes: hours * 60,
-                    notes,
-                    type: 'manual'
-                });
-
-                e.target.reset();
-                document.getElementById('quickLogModal').classList.remove('active');
-
-                this.saveData();
-                this.renderAll();
-                this.checkMentorNudge();
-            }
-
-            closeQuickLogModal() {
-                document.getElementById('quickLogModal').classList.remove('active');
-            }
-
-            // ==================== CATEGORY FUNCTIONS ====================
-
-            showCategoryModal() {
-                document.getElementById('categoryModal').classList.add('active');
-            }
-
-            closeCategoryModal() {
-                document.getElementById('categoryModal').classList.remove('active');
-            }
-
-            saveCategory(e) {
-                e.preventDefault();
-                
-                const formData = new FormData(e.target);
-                
-                this.state.categories.push({
-                    id: 'custom_' + Date.now(),
-                    name: formData.get('name'),
-                    target: parseInt(formData.get('target')),
-                    color: formData.get('color')
-                });
-
-                e.target.reset();
-                document.getElementById('categoryModal').classList.remove('active');
-
-                this.saveData();
-                this.renderAll();
-            }
-
-            // ==================== TARGET FUNCTIONS ====================
-
-            showTargetModal() {
-                const targets = this.state.targets;
-                
-                document.querySelector('[name="clinical"]').value = targets.clinical || '';
-                document.querySelector('[name="research"]').value = targets.research || '';
-                document.querySelector('[name="education"]').value = targets.education || '';
-                document.querySelector('[name="admin"]').value = targets.admin || '';
-
-                document.getElementById('targetModal').classList.add('active');
-            }
-
-            closeTargetModal() {
-                document.getElementById('targetModal').classList.remove('active');
-            }
-
-            saveTargets(e) {
-                e.preventDefault();
-                
-                const formData = new FormData(e.target);
-                
-                this.state.targets = {
-                    clinical: parseInt(formData.get('clinical')),
-                    research: parseInt(formData.get('research')),
-                    education: parseInt(formData.get('education')),
-                    admin: parseInt(formData.get('admin'))
-                };
-
-                e.target.reset();
-                document.getElementById('targetModal').classList.remove('active');
-
-                this.saveData();
-                this.renderAll();
-            }
-
-            // ==================== RENDERING FUNCTIONS ====================
-
-            renderAll() {
-                this.renderCategories();
-                this.updateTimerDisplay();
-                this.renderProgressRings();
-                this.renderWeekView();
-                this.renderTodaySummary();
-                this.generateInsight();
-                this.checkMentorNudge();
-                this.renderAnalytics();
-            }
-
-            renderCategories() {
-                const container = document.getElementById('categoryList');
-                container.innerHTML = '';
-
-                let totalProgress = 0;
-                let categoryCount = 0;
-
-                this.state.categories.forEach(cat => {
-                    const todayLogs = this.getTodayLogsByCategory(cat.id);
-                    const todayHours = todayLogs.reduce((sum, log) => sum + (log.duration_minutes / 60), 0);
-                    
-                    // Calculate year progress (simple approximation based on week of year)
-                    const now = new Date();
-                    const startOfYear = new Date(now.getFullYear(), 0, 1);
-                    const daysElapsed = Math.floor((now - startOfYear) / (1000 * 60 * 60 * 24));
-                    const progressPercent = Math.min(100, ((daysElapsed + todayHours * 7.3) / cat.target * 100).toFixed(1));
-
-                    totalProgress += parseFloat(progressPercent);
-                    categoryCount++;
-
-                    const item = document.createElement('div');
-                    item.className = `category-item ${this.state.timer.category === cat.id ? 'active' : ''}`;
-                    item.onclick = () => {
-                        if (!this.state.timer.active) {
-                            this.selectCategoryForTimer(cat.id);
-                        }
-                    };
-
-                    item.innerHTML = `
-                        <div class="category-header">
-                            <span class="category-name">${cat.name}</span>
-                            <span class="category-color" style="background: ${cat.color}"></span>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${Math.min(100, progressPercent)}%; background: ${cat.color}"></div>
-                        </div>
-                        <div class="category-stats">
-                            <span>${todayHours.toFixed(1)} hrs today</span>
-                            <span>${progressPercent}% yearly</span>
-                        </div>
-                    `;
-
-                    container.appendChild(item);
-                });
-
-                // Update category dropdown for quick log and timer
-                const timerCategorySelect = document.getElementById('quickLogCategory');
-                if (timerCategorySelect) {
-                    timerCategorySelect.innerHTML = '';
-                    this.state.categories.forEach(cat => {
-                        const option = document.createElement('option');
-                        option.value = cat.id;
-                        option.textContent = `${cat.name}`;
-                        timerCategorySelect.appendChild(option);
-                    });
-                }
-
-                // Update average progress for insight
-                if (categoryCount > 0) {
-                    const avgProgress = (totalProgress / categoryCount).toFixed(1);
-                    document.getElementById('dailyInsight').textContent = 
-                        `You're averaging ${avgProgress}% of yearly targets across all categories. Keep it up!`;
-                }
-            }
-
-            selectCategoryForTimer(categoryId) {
-                if (!this.state.timer.active) {
-                    const categorySelect = document.getElementById('quickLogCategory');
-                    if (categorySelect) {
-                        categorySelect.value = categoryId;
-                    }
-                }
-            }
-
-            renderProgressRings() {
-                const categories = [
-                    { id: 'clinical', color: '#4CAF50' },
-                    { id: 'research', color: '#FF9800' },
-                    { id: 'education', color: '#2196F3' },
-                    { id: 'admin', color: '#9C27B0' }
-                ];
-
-                const now = new Date();
-                const startOfYear = new Date(now.getFullYear(), 0, 1);
-                const daysElapsed = Math.floor((now - startOfYear) / (1000 * 60 * 60 * 24));
-                const expectedPercent = daysElapsed / 365;
-
-                categories.forEach(cat => {
-                    const category = this.state.categories.find(c => c.id === cat.id);
-                    if (!category) return;
-
-                    const totalHoursLogged = this.getTotalHoursForCategory(cat.id);
-                    const target = this.state.targets[cat.id] || 0;
-                    
-                    // Adjust for days elapsed (expected progress by now)
-                    const expectedHours = target * expectedPercent;
-                    let progressPercent = (totalHoursLogged / target) * 100;
-
-                    if (!target) {
-                        progressPercent = 0;
-                    }
-
-                    progressPercent = Math.min(100, parseFloat(progressPercent.toFixed(1)));
-
-                    // Update text
-                    document.getElementById(`${cat.id}ProgressText`).textContent = `${progressPercent}%`;
-
-                    // Update ring (circumference = 2πr = 283 for r=45)
-                    const circumference = 2 * Math.PI * 45;
-                    const offset = circumference - (progressPercent / 100) * circumference;
-
-                    const circle = document.getElementById(`${cat.id}ProgressRing`);
-                    if (circle) {
-                        circle.style.strokeDasharray = circumference;
-                        circle.style.strokeDashoffset = offset;
-                        
-                        // Color code based on progress vs expected
-                        if (progressPercent < expectedPercent * 0.8) {
-                            circle.style.stroke = '#ef4444'; // Red - behind
-                        } else if (progressPercent > expectedPercent * 1.2) {
-                            circle.style.stroke = '#22c55e'; // Green - ahead
-                        }
-                    }
-                });
-            }
-
-            getTotalHoursForCategory(categoryId) {
-                let totalMinutes = 0;
-                
-                Object.values(this.state.logs).forEach(dateLogs => {
-                    dateLogs.forEach(log => {
-                        if (log.category === categoryId && log.duration_minutes) {
-                            totalMinutes += log.duration_minutes;
-                        }
-                    });
-                });
-
-                return totalMinutes / 60;
-            }
-
-            renderWeekView() {
-                const dayGrid = document.getElementById('dayGrid');
-                const weekLabel = document.getElementById('currentWeekLabel');
-                
-                const today = new Date();
-                const startOfWeek = this.getStartOfWeek(today);
-                weekLabel.textContent = startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-                dayGrid.innerHTML = '';
-
-                for (let i = 0; i < 7; i++) {
-                    const date = new Date(startOfWeek);
-                    date.setDate(date.getDate() + i);
-                    
-                    const dateStr = date.toISOString().split('T')[0];
-                    const isToday = date.toDateString() === today.toDateString();
-                    
-                    // Count logged hours for this day
-                    let totalHours = 0;
-                    if (this.state.logs[dateStr]) {
-                        totalHours = this.state.logs[dateStr].reduce((sum, log) => sum + (log.duration_minutes / 60), 0);
-                    }
-
-                    const hasLog = totalHours > 0;
-
-                    const dayCell = document.createElement('div');
-                    dayCell.className = `day-cell ${isToday ? 'today' : ''} ${hasLog ? 'has-log' : ''}`;
-                    
-                    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-                    
-                    dayCell.innerHTML = `
-                        <div class="text-xs text-gray-400">${dayName}</div>
-                        <div class="day-number">${date.getDate()}</div>
-                        ${hasLog ? `<div class="day-hours">${totalHours.toFixed(1)}h</div>` : ''}
-                    `;
-
-                    if (isToday) {
-                        dayCell.onclick = () => this.openDayModal(dateStr);
-                    } else {
-                        dayCell.style.cursor = 'default';
-                    }
-
-                    dayGrid.appendChild(dayCell);
-                }
-            }
-
-            getStartOfWeek(date) {
-                const d = new Date(date);
-                const day = d.getDay();
-                const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-                return new Date(d.setDate(diff));
-            }
-
-            renderTodaySummary() {
-                const todayStr = new Date().toISOString().split('T')[0];
-                const summaryEl = document.getElementById('todaySummary');
-                
-                if (!this.state.logs[todayStr] || this.state.logs[todayStr].length === 0) {
-                    summaryEl.textContent = 'No sessions logged yet today. Start your first timer!';
-                    return;
-                }
-
-                let totalHours = 0;
-                const categoriesLogged = [];
-
-                this.state.logs[todayStr].forEach(log => {
-                    totalHours += log.duration_minutes / 60;
-                    const cat = this.state.categories.find(c => c.id === log.category);
-                    if (cat && !categoriesLogged.includes(cat.name)) {
-                        categoriesLogged.push(cat.name);
-                    }
-                });
-
-                summaryEl.innerHTML = `
-                    <strong>Total today:</strong> ${totalHours.toFixed(1)} hours<br>
-                    <strong>Categories logged:</strong> ${categoriesLogged.join(', ')}
-                `;
-            }
-
-            openDayModal(dateStr) {
-                const dateObj = new Date(dateStr);
-                document.getElementById('modalDayTitle').textContent = 
-                    dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-
-                const sessionList = document.getElementById('daySessionList');
-                const gapAnalysis = document.getElementById('gapAnalysis');
-                
-                sessionList.innerHTML = '';
-
-                const logsForDate = this.state.logs[dateStr] || [];
-                
-                if (logsForDate.length === 0) {
-                    sessionList.innerHTML = '<p class="text-sm text-gray-500">No sessions logged for this day.</p>';
-                } else {
-                    let categoryHours = {};
-                    
-                    logsForDate.forEach(log => {
-                        const catName = this.state.categories.find(c => c.id === log.category)?.name || 'Unknown';
-                        
-                        if (!categoryHours[log.category]) {
-                            categoryHours[log.category] = 0;
-                        }
-                        categoryHours[log.category] += log.duration_minutes / 60;
-
-                        const sessionDiv = document.createElement('div');
-                        sessionDiv.style.cssText = 'padding: 1rem; background: #f9fafb; border-radius: 8px; margin-bottom: 0.75rem;';
-                        
-                        sessionDiv.innerHTML = `
-                            <div class="flex justify-between">
-                                <span class="font-bold" style="color: ${this.getCategoryColor(log.category)}">${catName}</span>
-                                <span class="text-sm font-bold">${(log.duration_minutes / 60).toFixed(2)} hrs</span>
-                            </div>
-                            <p class="text-xs text-gray-500">Logged: ${new Date().toLocaleTimeString()}</p>
-                        `;
-
-                        sessionList.appendChild(sessionDiv);
-                    });
-
-                    // Gap analysis
-                    const now = new Date();
-                    const startOfYear = new Date(now.getFullYear(), 0, 1);
-                    const daysElapsed = Math.floor((now - startOfYear) / (1000 * 60 * 60 * 24));
-                    const expectedPercent = daysElapsed / 365;
-
-                    let gapHtml = '<div style="margin-top: 1rem;">';
-                    
-                    Object.entries(categoryHours).forEach(([catId, hours]) => {
-                        const target = this.state.targets[catId] || 0;
-                        if (target) {
-                            const expectedHours = target * expectedPercent;
-                            const isAhead = hours >= expectedHours;
-                            
-                            gapHtml += `
-                                <div style="margin-bottom: 0.5rem;">
-                                    ${isAhead ? '✓' : '⚠'} 
-                                    <span class="text-sm">${this.state.categories.find(c => c.id === catId)?.name}: </span>
-                                    <span class="text-xs">${hours.toFixed(1)} hrs logged (${isAhead ? '+' : ''}${Math.abs(hours - expectedHours).toFixed(1)} vs ${expectedHours.toFixed(1)} expected)</span>
-                                </div>
-                            `;
-                        }
-                    });
-
-                    gapHtml += '</div>';
-                    gapAnalysis.innerHTML = gapHtml;
-                }
-
-                document.getElementById('dayModal').classList.add('active');
-            }
-
-            closeDayModal() {
-                document.getElementById('dayModal').classList.remove('active');
-            }
-
-            getCategoryColor(categoryId) {
-                const cat = this.state.categories.find(c => c.id === categoryId);
-                return cat ? cat.color : '#6b7280';
-            }
-
-            // ==================== INSIGHT ENGINE ====================
-
-            generateInsight() {
-                const now = new Date();
-                const startOfYear = new Date(now.getFullYear(), 0, 1);
-                const daysElapsed = Math.floor((now - startOfYear) / (1000 * 60 * 60 * 24));
-                const expectedPercent = daysElapsed / 365;
-
-                let insights = [];
-                
-                this.state.categories.forEach(cat => {
-                    const totalHours = this.getTotalHoursForCategory(cat.id);
-                    const target = this.state.targets[cat.id] || 0;
-                    
-                    if (target) {
-                        const progressPercent = (totalHours / target) * 100;
-                        
-                        if (progressPercent < expectedPercent * 80) {
-                            insights.push(`Your ${cat.name} is behind at ${(progressPercent).toFixed(0)}% of yearly goal.`);
-                        } else if (progressPercent > expectedPercent * 120) {
-                            insights.push(`Great work on ${cat.name} - you're ${(progressPercent).toFixed(0)}% ahead!`);
-                        }
-                    }
-                });
-
-                // Check for patterns in logged hours by day of week (simplified)
-                if (this.state.logs['2024-01-15']) { // Placeholder logic
-                    insights.push('Tip: Log sessions earlier in the day to maintain better focus.');
-                }
-
-                document.getElementById('dailyInsight').textContent = 
-                    insights.length > 0 ? insights[0] : 'You\'re on track! Keep logging your progress.';
-            }
-
-            checkMentorNudge() {
-                const now = new Date();
-                const startOfYear = new Date(now.getFullYear(), 0, 1);
-                const daysElapsed = Math.floor((now - startOfYear) / (1000 * 60 * 60 * 24));
-                const weeksRemaining = Math.max(1, Math.ceil((365 - daysElapsed) / 7));
-
-                let needsNudge = false;
-                let nudgeMessage = '';
-
-                this.state.categories.forEach(cat => {
-                    const totalHours = this.getTotalHoursForCategory(cat.id);
-                    const target = this.state.targets[cat.id] || 0;
-                    
-                    if (target) {
-                        const expectedProgress = daysElapsed / 365;
-                        const actualProgress = totalHours / target;
-
-                        if (actualProgress < expectedProgress * 0.7 && weeksRemaining > 10) {
-                            needsNudge = true;
-                            nudgeMessage = `Your ${cat.name} is significantly behind trajectory. A mentor conversation could help recalibrate your approach.`;
-                        }
-                    }
-                });
-
-                const nudgeCard = document.getElementById('mentorNudge');
-                if (needsNudge) {
-                    nudgeCard.classList.remove('hidden');
-                    document.getElementById('mentorNudgeText').textContent = nudgeMessage;
-                } else {
-                    nudgeCard.classList.add('hidden');
-                }
-            }
-
-            dismissNudge() {
-                document.getElementById('mentorNudge').classList.add('hidden');
-            }
-
-            // ==================== ANALYTICS ====================
-
-            renderAnalytics() {
-                const ctx = document.getElementById('analyticsChart');
-                if (!ctx) return;
-
-                // Get this week's data
-                const startOfWeek = this.getStartOfWeek(new Date());
-                const weeklyData = [];
-
-                for (let i = 0; i < 7; i++) {
-                    const date = new Date(startOfWeek);
-                    date.setDate(date.getDate() + i);
-                    const dateStr = date.toISOString().split('T')[0];
-
-                    let totalHours = 0;
-                    if (this.state.logs[dateStr]) {
-                        totalHours = this.state.logs[dateStr].reduce((sum, log) => sum + (log.duration_minutes / 60), 0);
-                    }
-
-                    weeklyData.push({ day: date.toLocaleDateString('en-US', { weekday: 'short' }), hours: totalHours });
-                }
-
-                // Draw simple bar chart
-                const maxHours = Math.max(1, ...weeklyData.map(d => d.hours));
-                
-                let html = '<svg width="500" height="200">';
-                
-                weeklyData.forEach((d, i) => {
-                    const x = 40 + (i * 70);
-                    const barHeight = (d.hours / maxHours) * 120;
-                    const y = 160 - barHeight;
-
-                    html += `
-                        <rect x="${x}" y="${y}" width="50" height="${barHeight}" fill="#4f46e5" rx="4"/>
-                        <text x="${x + 25}" y="185" text-anchor="middle" font-size="12">${d.day}</text>
-                    `;
-                });
-
-                html += '</svg>';
-                
-                // For now, just display the SVG HTML
-                const canvas = document.getElementById('analyticsChart');
-                if (canvas) {
-                    // In production, use a charting library like Chart.js
-                    canvas.parentElement.innerHTML = '<div style="text-align: center; padding: 2rem;">' + 
-                        'Weekly hours overview coming soon in the full version!</div>';
-                }
-            }
-
-            // ==================== UTILITY FUNCTIONS ====================
-
-            getTodayLogsByCategory(categoryId) {
-                const todayStr = new Date().toISOString().split('T')[0];
-                if (!this.state.logs[todayStr]) return [];
-                return this.state.logs[todayStr].filter(log => log.category === categoryId);
-            }
-
-            exportData() {
-                const dataStr = JSON.stringify(this.state, null, 2);
-                const blob = new Blob([dataStr], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `faculty-time-compass-${new Date().toISOString().split('T')[0]}.json`;
-                a.click();
-
-                URL.revokeObjectURL(url);
-            }
-
-            resetData() {
-                if (confirm('Are you sure? This will delete all your logged data. This cannot be undone.')) {
-                    localStorage.removeItem('facultyTimeCompass');
-                    location.reload();
-                }
-            }
+  `;
+}
+
+// === TICKER UPDATE ===
+function updateTicker() {
+  const today = new Date().toISOString().split('T')[0];
+  const todaysCalls = appState.dailyLogs.filter(log => log.date === today);
+  
+  const totalCalls = todaysCalls.length;
+  const totalTime = todaysCalls.reduce((sum, l) => sum + l.durationMinutes, 0);
+  const prospectsCount = todaysCalls.reduce((sum, l) => sum + (l.prospectsLogged || 0), 0);
+  const assetsReceived = todaysCalls.reduce((sum, l) => sum + (l.assetsReceivedValue || 0), 0);
+  const assetsPending = todaysCalls.reduce((sum, l) => sum + (l.assetsPendingValue || 0), 0);
+  
+  // Streak calculation (consecutive days with at least 1 call)
+  let streak = 0;
+  for (let i = 0; i < 365; i++) {
+    const checkDate = new Date();
+    checkDate.setDate(checkDate.getDate() - i);
+    const dateStr = checkDate.toISOString().split('T')[0];
+    
+    if (appState.dailyLogs.some(log => log.date === dateStr)) {
+      streak++;
+    } else if (i > 0) {
+      break;
+    }
+  }
+  
+  // Average vs Today comparison
+  const allCalls = appState.dailyLogs;
+  const avgDaily = allCalls.length / Math.max(1, new Set(allCalls.map(l => l.date)).size);
+  const trendUp = totalCalls >= avgDaily;
+  
+  elements.tickerBar.callsToday.textContent = `${totalCalls}`;
+  elements.tickerBar.timeSpent.textContent = formatTime(totalTime * 60);
+  elements.tickerBar.prospectsCount.textContent = prospectsCount;
+  elements.tickerBar.assetsReceived.textContent = `$${assetsReceived.toLocaleString()}`;
+  elements.tickerBar.assetsPending.textContent = `$${assetsPending.toLocaleString()}`;
+  elements.tickerBar.streakCount.textContent = `🔥${streak}`;
+  
+  if (allCalls.length > 0) {
+    const diff = totalCalls - avgDaily;
+    const sign = diff >= 0 ? '+' : '';
+    elements.tickerBar.todayVsAvg.textContent = `${totalCalls} / ${avgDaily.toFixed(1)} avg`;
+    
+    if (trendUp && diff > 0) {
+      elements.tickerBar.trendArrow.innerHTML = '⬆️';
+    } else if (!trendUp && diff < 0) {
+      elements.tickerBar.trendArrow.innerHTML = '⬇️';
+    } else {
+      elements.tickerBar.trendArrow.innerHTML = '➡️';
+    }
+  } else {
+    elements.tickerBar.todayVsAvg.textContent = 'vs 0 calls';
+    elements.tickerBar.trendArrow.innerHTML = '';
+  }
+}
+
+// === INSIGHTS GENERATION (Science-Based) ===
+function generateInsight() {
+  const insights = [
+    // Mind Lie Detection (Cognitive Behavioral Science - Beck, 1976)
+    () => {
+      if (!appState.dailyLogs.length) return null;
+      
+      const callsWithAnxiety = appState.dailyLogs.filter(l => l.preAnxiety && l.postEase);
+      if (callsWithAnxiety.length < 3) return null;
+      
+      const avgPreAnxiety = callsWithAnxiety.reduce((sum, c) => sum + c.preAnxiety, 0) / callsWithAnxiety.length;
+      const avgPostEase = callsWithAnxiety.reduce((sum, c) => sum + c.postEase, 0) / callsWithAnxiety.length;
+      
+      if (avgPreAnxiety > avgPostEase + 1.5) {
+        return `Mind Lie Detected! 🧠 Your brain estimated an average anxiety of <span class="insight-highlight">${avgPreAnxiety.toFixed(1)}</span> before calls, but reality was only <span class="insight-highlight">${avgPostEase.toFixed(1)}</span>. This gap shows your anticipation is worse than the actual experience—a pattern psychologists call "affective forecasting bias." Each time you act despite anxiety, you're rewiring that prediction loop.`;
+      }
+      return null;
+    },
+    
+    // Warm-Up Effect (Performance Psychology)
+    () => {
+      if (!appState.dailyLogs.length) return null;
+      
+      const today = new Date().toISOString().split('T')[0];
+      const todaysCalls = appState.dailyLogs.filter(l => l.date === today && l.preAnxiety);
+      
+      if (todaysCalls.length < 2) return null;
+      
+      const firstCall = todaysCalls[0].preAnxiety;
+      const lastCall = todaysCalls[todaysCalls.length - 1].preAnxiety;
+      
+      if (firstCall > lastCall + 1) {
+        return `Warm-Up Effect in Action! 🔥 Your first call today averaged <span class="insight-highlight">${firstCall}</span> anxiety, but by the end you're down to <span class="insight-highlight">${lastCall}</span>. This mirrors the "warm-up effect" in athletic performance—your brain builds momentum with each action. Consider scheduling your hardest calls after 3-4 warm-ups.`;
+      }
+      return null;
+    },
+    
+    // Streak Motivation (Behavioral Economics - Loss Aversion)
+    () => {
+      let streak = 0;
+      for (let i = 0; i < 365; i++) {
+        const checkDate = new Date();
+        checkDate.setDate(checkDate.getDate() - i);
+        const dateStr = checkDate.toISOString().split('T')[0];
+        
+        if (appState.dailyLogs.some(log => log.date === dateStr)) {
+          streak++;
+        } else if (i > 0) {
+          break;
         }
+      }
+      
+      if (streak >= 5 && streak < 10) {
+        return `Streak Alert! 🔥 You've logged activity ${streak} day(s) in a row. Behavioral economics shows humans are motivated by "loss aversion"—the pain of breaking a streak feels worse than the joy of starting a new one. Protect this momentum.`;
+      } else if (streak >= 10) {
+        return `Incredible Momentum! 🚀 ${streak} days strong! Research on habit formation shows that after ~66 days, behavior shifts from "willpower-dependent" to "identity-based." You're building an identity as someone who shows up.`;
+      }
+      return null;
+    },
+    
+    // Revenue Per Hour (Economic Perspective)
+    () => {
+      if (!appState.dailyLogs.length) return null;
+      
+      const today = new Date().toISOString().split('T')[0];
+      const todaysCalls = appState.dailyLogs.filter(l => l.date === today);
+      
+      const totalRevenue = todaysCalls.reduce((sum, l) => sum + (l.assetsReceivedValue || 0), 0);
+      const totalTime = todaysCalls.reduce((sum, l) => sum + l.durationMinutes, 0);
+      
+      if (totalTime > 0 && totalRevenue > 0) {
+        const revenuePerHour = (totalRevenue / totalTime) * 60;
+        
+        // Get historical average for comparison
+        const allCalls = appState.dailyLogs;
+        let histTotalRev = 0, histTotalMin = 0;
+        for (const call of allCalls) {
+          histTotalRev += call.assetsReceivedValue || 0;
+          histTotalMin += call.durationMinutes;
+        }
+        
+        const avgRevenuePerHour = histTotalMin > 0 ? (histTotalRev / histTotalMin) * 60 : 0;
+        
+        if (revenuePerHour > avgRevenuePerHour * 1.2) {
+          return `Efficiency Champion! 💰 You're earning <span class="insight-highlight">$${revenuePerHour.toFixed(0)}</span>/hour today, above your average of <span class="insight-highlight">$${avgRevenuePerHour.toFixed(0)}</span>. This suggests you've found a rhythm—protect these hours.`;
+        } else if (revenuePerHour > 1000) {
+          return `Strong Value Creation! 💎 <span class="insight-highlight">$${totalRevenue.toLocaleString()}</span> in assets today from ${todaysCalls.length} calls. That's the kind of impact that matters—keep showing up.`;
+        }
+      }
+      return null;
+    },
+    
+    // Default Uplifting Message
+    () => {
+      const today = new Date().toISOString().split('T')[0];
+      const todaysCalls = appState.dailyLogs.filter(l => l.date === today).length;
+      
+      if (todaysCalls > 0) {
+        return `You've made <span class="insight-highlight">${todaysCalls} call(s)</span> today. Every action you take compounds—research shows that small, consistent behaviors create significant long-term results. You're building momentum.`;
+      }
+      
+      if (appState.dailyLogs.length > 0) {
+        return `You've logged <span class="insight-highlight">${appState.dailyLogs.length} call(s)</span> total! This data is your compass—each entry helps you see patterns and make better decisions. Keep tracking.`;
+      }
+      
+      return `Ready to build momentum? Starting just one call changes the equation from "avoidance" to action. The hardest part is always beginning.`;
+    }
+  ];
+  
+  for (const insightFn of insights) {
+    const result = insightFn();
+    if (result) {
+      elements.insightContent.innerHTML = result;
+      return;
+    }
+  }
+}
 
-        // Initialize the app when DOM is ready
-        document.addEventListener('DOMContentLoaded', () => {
-            window.app = new FacultyTimeCompass();
-        });
-    </script>
+// === UTILITY FUNCTIONS ===
+function formatTime(totalSeconds) {
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  
+  if (h > 0) {
+    return `${h}h ${m}m`;
+  }
+  return `${m}m ${Math.round(totalSeconds % 60)}s`;
+}
+
+function playClickSound(type = 'click') {
+  // Web Audio API for synthesized click sounds (no external files needed)
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  
+  const oscillator = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  
+  if (type === 'click') {
+    oscillator.frequency.value = 800;
+    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+    oscillator.start(audioCtx.currentTime);
+    oscillator.stop(audioCtx.currentTime + 0.1);
+  } else if (type === 'start') {
+    oscillator.frequency.value = 600;
+    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+    oscillator.start(audioCtx.currentTime);
+    oscillator.stop(audioCtx.currentTime + 0.15);
+  } else if (type === 'stop') {
+    oscillator.frequency.value = 400;
+    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+    oscillator.start(audioCtx.currentTime);
+    oscillator.stop(audioCtx.currentTime + 0.2);
+  } else if (type === 'reset') {
+    oscillator.frequency.value = 300;
+    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+    oscillator.start(audioCtx.currentTime);
+    oscillator.stop(audioCtx.currentTime + 0.25);
+  }
+}
+
+// === BENCHMARK RESET ===
+function resetBenchmarks() {
+  elements.resetModal.classList.add('show');
+}
+
+function confirmReset() {
+  appState.benchmarks = { bestDayCalls: 0, avgDailyCalls: 0, lastResetDate: new Date().toISOString().split('T')[0] };
+  saveData();
+  closeModal();
+  updateTicker();
+}
+
+function closeModal() {
+  elements.resetModal.classList.remove('show');
+}
+
+// === INIT ON LOAD ===
+window.addEventListener('DOMContentLoaded', init);
+</script>
 </body>
 </html>
