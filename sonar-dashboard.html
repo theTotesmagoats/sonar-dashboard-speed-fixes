@@ -1,485 +1,41 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AdvisorFlow - Call Tracker</title>
-  <style>
-    :root {
-      --led-orange: #ff6b35;
-      --led-red: #d94f4f;
-      --led-bg: #1a1a2e;
-      --panel-bg: #0f0f1a;
-      --text-primary: #ffffff;
-      --text-secondary: #a0a0b0;
-      --accent-blue: #4fc3f7;
-      --accent-green: #66bb6a;
-      --accent-yellow: #ffa726;
-      --border-color: #2d2d44;
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-
-    body {
-      background: linear-gradient(135deg, #0a0a12 0%, #1a1a2e 100%);
-      color: var(--text-primary);
-      min-height: 100vh;
-      padding-bottom: 60px;
-    }
-
-    /* === SCROLLING TICKER BAR === */
-    .ticker-bar {
-      background: #0d0d14;
-      border-bottom: 2px solid var(--led-orange);
-      overflow: hidden;
-      white-space: nowrap;
-      padding: 10px 0;
-      position: relative;
-    }
-
-    .ticker-track {
-      display: inline-block;
-      animation: scroll-left 30s linear infinite;
-    }
-
-    @keyframes scroll-left {
-      from { transform: translateX(100%); }
-      to { transform: translateX(-100%); }
-    }
-
-    .ticker-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 15px;
-      padding: 0 25px;
-      font-size: 14px;
-    }
-
-    .ticker-label { color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; font-size: 11px; }
-    .ticker-value { font-weight: bold; color: var(--accent-green); }
-    .ticker-value.negative { color: var(--led-red); }
-    .ticker-trend { font-size: 12px; }
-
-    /* === MAIN LAYOUT === */
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-      display: grid;
-      gap: 20px;
-    }
-
-    /* === TIMER SECTION === */
-    .timer-section {
-      background: var(--panel-bg);
-      border-radius: 16px;
-      padding: 30px;
-      text-align: center;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    }
-
-    .timer-display {
-      font-family: 'Courier New', monospace;
-      font-size: 120px;
-      color: var(--led-orange);
-      text-shadow: 0 0 20px rgba(255, 107, 53, 0.6), 0 0 40px rgba(255, 107, 53, 0.3);
-      margin-bottom: 20px;
-      letter-spacing: 8px;
-    }
-
-    .timer-controls {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-
-    .btn {
-      padding: 14px 32px;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      border: none;
-    }
-
-    .btn-primary { background: var(--led-orange); color: #fff; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4); }
-    .btn-secondary { background: var(--border-color); color: var(--text-primary); }
-    .btn-danger { background: var(--led-red); color: #fff; }
-
-    .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
-    .btn:active:not(:disabled) { transform: translateY(0); }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    /* === CATEGORY SELECTOR === */
-    .category-selector {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-
-    .cat-btn {
-      padding: 8px 20px;
-      border-radius: 6px;
-      background: var(--border-color);
-      color: var(--text-primary);
-      cursor: pointer;
-      font-size: 14px;
-      transition: all 0.2s ease;
-    }
-
-    .cat-btn.active { background: var(--accent-blue); color: #fff; }
-    .cat-btn:hover { transform: scale(1.05); }
-
-    /* === ANXIETY RATING === */
-    .anxiety-section {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-
-    .anxiety-label { color: var(--text-secondary); font-size: 14px; }
-
-    .rating-buttons { display: flex; gap: 8px; }
-
-    .rating-btn {
-      width: 45px; height: 45px;
-      border-radius: 8px;
-      background: var(--border-color);
-      color: var(--text-primary);
-      font-size: 18px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .rating-btn:hover { transform: scale(1.1); }
-    .rating-btn.selected { background: var(--led-orange); color: #fff; box-shadow: 0 0 15px rgba(255, 107, 53, 0.6); }
-
-    /* === INSIGHTS PANEL === */
-    .insights-panel {
-      background: linear-gradient(135deg, #1a1a3e 0%, #2d2d4f 100%);
-      border-radius: 16px;
-      padding: 25px;
-    }
-
-    .insights-title {
-      font-size: 18px; color: var(--accent-yellow); margin-bottom: 15px;
-      display: flex; align-items: center; gap: 10px;
-    }
-
-    .insight-content { line-height: 1.7; font-size: 15px; color: var(--text-primary); }
-
-    .insight-highlight { background: rgba(255, 167, 38, 0.15); padding: 3px 8px; border-radius: 4px; font-weight: bold; color: var(--accent-yellow); }
-
-    /* === DAILY LOG === */
-    .daily-log {
-      background: var(--panel-bg);
-      border-radius: 16px;
-      padding: 25px;
-    }
-
-    .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-
-    .log-title { font-size: 18px; color: var(--accent-blue); }
-
-    /* === CALL ENTRY (EDITABLE) === */
-    .call-entry {
-      background: rgba(255, 255, 255, 0.03);
-      border-radius: 10px;
-      padding: 18px;
-      margin-bottom: 12px;
-      border-left: 4px solid var(--accent-blue);
-    }
-
-    .call-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
-    .call-time { font-size: 13px; color: var(--text-secondary); }
-    .call-meta { display: flex; gap: 15px; font-size: 12px; margin-bottom: 8px; }
-    .call-note { font-style: italic; color: var(--text-secondary); margin-top: 8px; font-size: 13px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); }
-
-    /* Editable Metrics Section */
-    .metrics-edit {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 12px;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px dashed var(--border-color);
-    }
-
-    .metric-field { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .metric-label { color: var(--text-secondary); font-size: 12px; width: 100px; }
-    .metric-input {
-      padding: 6px 10px;
-      border-radius: 5px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--border-color);
-      color: var(--text-primary);
-      font-size: 13px;
-      width: 100%;
-    }
-
-    .metric-input:focus { outline: none; border-color: var(--accent-blue); }
-    
-    .saved-badge {
-      display: inline-block;
-      padding: 2px 8px;
-      background: rgba(102, 187, 106, 0.2);
-      color: var(--accent-green);
-      border-radius: 4px;
-      font-size: 10px;
-    }
-
-    /* === ADD CATEGORY FORM === */
-    .add-category-form { display: flex; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color); flex-wrap: wrap; align-items: center; }
-
-    .form-input {
-      padding: 10px 15px;
-      border-radius: 6px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--border-color);
-      color: var(--text-primary);
-      font-size: 14px;
-    }
-
-    .form-input:focus { outline: none; border-color: var(--accent-blue); }
-
-    /* === WEEKLY SUMMARY === */
-    .weekly-data {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 10px;
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border-color);
-    }
-
-    .day-card {
-      text-align: center;
-      padding: 15px 8px;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 8px;
-      position: relative;
-    }
-
-    .day-name { font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; }
-    .day-value { font-size: 24px; font-weight: bold; color: var(--accent-green); }
-    .day-best { position: absolute; top: -8px; right: 10px; background: var(--led-orange); border-radius: 6px; padding: 2px 6px; font-size: 9px; }
-
-    /* === MANUAL ENTRY FORM === */
-    .manual-entry-form {
-      display: none; margin-top: 15px; padding: 20px; background: rgba(255, 255, 255, 0.03); border-radius: 10px;
-    }
-
-    .manual-entry-form.show { display: block; }
-
-    .form-row { margin-bottom: 12px; }
-    .form-row label { display: block; color: var(--text-secondary); font-size: 13px; margin-bottom: 5px; }
-    .form-row input, .form-row select { width: 100%; padding: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-color); color: var(--text-primary); }
-
-    .toggle-btn {
-      background: none; border: 1px solid var(--border-color); color: var(--text-secondary);
-      padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;
-    }
-
-    /* === RESET MODAL === */
-    .reset-modal {
-      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.8); justify-content: center; align-items: center; z-index: 1000;
-    }
-
-    .reset-modal.show { display: flex; }
-    .modal-content { background: var(--panel-bg); border-radius: 16px; padding: 30px; max-width: 450px; text-align: center; }
-
-    /* === RESPONSIVE === */
-    @media (max-width: 768px) {
-      .timer-display { font-size: 80px; letter-spacing: 4px; }
-      .ticker-item { padding: 0 15px; gap: 10px; font-size: 13px; }
-      .container { padding: 15px; }
-      .metrics-edit { grid-template-columns: 1fr; }
-    }
-
-    /* === EDIT BUTTONS === */
-    .edit-actions { margin-top: 8px; display: flex; gap: 10px; }
-    .action-btn { font-size: 12px; padding: 5px 12px; border-radius: 4px; cursor: pointer; border: none; background: var(--border-color); color: var(--text-primary); }
-    .action-btn:hover { background: rgba(255,255,255,0.1); }
-
-    /* === POST-ANXIETY SECTION (Initially Hidden) === */
-    .post-anxiety-section {
-      display: none;
-      margin-top: 15px;
-      padding: 15px;
-      background: rgba(79, 195, 247, 0.1);
-      border-radius: 8px;
-    }
-
-    .post-anxiety-section.show { display: block; }
-
-    /* === NOTES SECTION (Initially Hidden) === */
-    .notes-section {
-      display: none; margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 8px;
-    }
-
-    .notes-section.show { display: block; }
-
-    .notes-input { width: 100%; padding: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 14px; resize: vertical; min-height: 60px; }
-
-    /* === PROGRESS BAR FOR DAILY GOAL (High Score) === */
-    .progress-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color); }
-    .progress-bar-bg { background: rgba(255,255,255,0.1); border-radius: 8px; height: 12px; overflow: hidden; margin-top: 8px; }
-    .progress-bar-fill { background: linear-gradient(90deg, var(--accent-green), var(--led-orange)); height: 100%; transition: width 0.3s ease; border-radius: 8px; }
-  </style>
-</head>
-<body>
-
-<!-- SCROLLING TICKER BAR -->
-<div class="ticker-bar">
-  <div class="ticker-track" id="tickerTrack">
-    <!-- Filled by JS -->
-  </div>
-</div>
-
-<div class="container">
-
-<!-- TIMER SECTION -->
-<div class="timer-section">
-  <div class="timer-display" id="timerDisplay">00:00:00</div>
-  
-  <div class="category-selector" id="categorySelector"></div>
-  
-  <div class="anxiety-section">
-    <span class="anxiety-label">Pre-Call Anxiety (1-5):</span>
-    <div class="rating-buttons" id="preAnxietyButtons"></div>
-  </div>
-
-  <button class="btn btn-secondary" style="margin-bottom: 20px;" onclick="showPostAnxiety()">😊 Log Post-Call Ease After Call</button>
-
-  <!-- Post Anxiety Section -->
-  <div class="post-anxiety-section" id="postAnxietySection">
-    <div style="text-align: left; margin-bottom: 10px;">
-      <span class="anxiety-label">Post-Call Ease (1-5, where 5 = very easy):</span>
-      <div class="rating-buttons" id="postEaseButtons" style="margin-top: 8px;"></div>
-    </div>
-  </div>
-
-  <!-- Notes Section -->
-  <div class="notes-section" id="notesSection">
-    <label style="display: block; color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">Call Notes:</label>
-    <textarea class="notes-input" id="callNotesInput" placeholder="What happened in this call? Any follow-ups needed?"></textarea>
-    <button class="btn btn-primary" onclick="saveCallEntry()" style="margin-top: 10px; width: 100%;">Save Call Entry</button>
-  </div>
-
-  <div class="timer-controls">
-    <button class="btn btn-primary" id="startBtn">START</button>
-    <button class="btn btn-secondary" id="stopBtn" disabled>STOP & EDIT</button>
-    <button class="btn btn-danger" id="resetBtn">RESET</button>
-  </div>
-
-  <!-- Manual Entry Toggle -->
-  <div style="margin-top: 15px;">
-    <button class="toggle-btn" onclick="document.getElementById('manualEntryForm').classList.toggle('show')">➕ Log Time Manually</button>
-    
-    <div class="manual-entry-form" id="manualEntryForm">
-      <h3 style="margin-bottom: 15px; color: var(--accent-blue);">Manual Time Entry</h3>
-      <div class="form-row">
-        <label>Duration (minutes)</label>
-        <input type="number" id="manualMinutes" min="1" placeholder="e.g., 25">
-      </div>
-      <div class="form-row">
-        <label>Category</label>
-        <select id="manualCategory"></select>
-      </div>
-      <button class="btn btn-primary" onclick="addManualEntry()">Log Entry</button>
-    </div>
-  </div>
-
-  <!-- High Score / Daily Goal Progress -->
-  <div class="progress-section">
-    <div style="display: flex; justify-content: space-between; font-size: 13px;">
-      <span style="color: var(--accent-yellow);">Today's Calls</span>
-      <span id="progressText" style="color: var(--text-secondary);"></span>
-    </div>
-    <div class="progress-bar-bg">
-      <div class="progress-bar-fill" id="progressBar" style="width: 0%;"></div>
-    </div>
-  </div>
-</div>
-
-<!-- INSIGHTS PANEL -->
-<div class="insights-panel">
-  <div class="insights-title">💡 Mentor Insight</div>
-  <div class="insight-content" id="insightContent"></div>
-</div>
-
-<!-- DAILY LOG -->
-<div class="daily-log">
-  <div class="log-header">
-    <span class="log-title">Today's Calls</span>
-    <button class="toggle-btn" onclick="document.getElementById('weeklyData').classList.toggle('show')">📅 View Weekly Summary</button>
-  </div>
-
-  <!-- Weekly Data -->
-  <div class="weekly-data" id="weeklyData"></div>
-
-  <!-- Call Entries Container -->
-  <div id="callEntriesContainer"></div>
-
-  <!-- Add Category Form -->
-  <div class="add-category-form">
-    <input type="text" class="form-input" id="newCategoryInput" placeholder="New category name..." style="flex: 1;">
-    <button class="btn btn-secondary" onclick="addCategory()">Add</button>
-    <button class="btn btn-danger" title="Reset all high scores and averages">🔄 Reset Benchmarks</button>
-  </div>
-</div>
-
-<!-- RESET MODAL -->
-<div class="reset-modal" id="resetModal">
-  <div class="modal-content">
-    <h2 style="margin-bottom: 15px;">Reset Benchmarks?</h2>
-    <p style="color: var(--text-secondary); margin-bottom: 20px;">This will clear all high scores and averages. You can't undo this.</p>
-    <div style="display: flex; gap: 15px; justify-content: center;">
-      <button class="btn btn-primary" onclick="confirmReset()">Yes, Reset</button>
-      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-    </div>
-  </div>
-</div>
-
-</div>
-
 <script>
 /**
- * ADVISORFLOW - Call Tracking App (FIXED VERSION)
- * Features: Scrolling ticker, Editable metrics per call, Full data management
+ * ADVISORFLOW - Call Tracking App
+ * Improved version:
+ * - Fixes timer double-count bug
+ * - Adds post-call ease tracking
+ * - Adds prospects / assets inputs
+ * - Makes benchmarks actually work
+ * - Persists active timer across refresh
+ * - Fixes entry timestamps
+ * - Adds category rename (true CRUD)
  */
 
-// === STATE MANAGEMENT ===
+const STORAGE_KEY = 'advisorflow_data_v2';
+
 const appState = {
   categories: ['Phone Calls', 'Appts', 'Research', 'CE', 'Other'],
   activeCategory: 'Phone Calls',
-  
+
   timer: {
     running: false,
-    startTime: null,
+    startedAt: null,
     elapsedSeconds: 0,
     intervalId: null
   },
 
   currentCall: {
+    startedAt: null,
     preAnxiety: null,
     postEase: null,
     notes: '',
     prospectsLogged: 0,
     assetsPendingValue: 0,
-    assetsReceivedValue: 0,
-    durationMinutes: 0
+    assetsReceivedValue: 0
   },
 
   dailyLogs: [],
-  
+
   benchmarks: {
     bestDayCalls: 0,
     avgDailyCalls: 0,
@@ -487,168 +43,511 @@ const appState = {
   }
 };
 
-// === DOM ELEMENTS ===
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 0
+});
+
+let audioCtx = null;
+
 const elements = {
   timerDisplay: document.getElementById('timerDisplay'),
   startBtn: document.getElementById('startBtn'),
   stopBtn: document.getElementById('stopBtn'),
   resetBtn: document.getElementById('resetBtn'),
-  
+
   categorySelector: document.getElementById('categorySelector'),
   preAnxietyButtons: document.getElementById('preAnxietyButtons'),
   postEaseButtons: document.getElementById('postEaseButtons'),
-  callNotesInput: document.getElementById('callNotesInput'),
-  
+  notesInput: document.getElementById('notesInput'),
+  prospectsInput: document.getElementById('prospectsInput'),
+  assetsPendingInput: document.getElementById('assetsPendingInput'),
+  assetsReceivedInput: document.getElementById('assetsReceivedInput'),
+
   callEntriesContainer: document.getElementById('callEntriesContainer'),
-  tickerTrack: document.getElementById('tickerTrack')
+
+  tickerBar: {
+    callsToday: document.getElementById('callsToday'),
+    timeSpent: document.getElementById('timeSpent'),
+    prospectsCount: document.getElementById('prospectsCount'),
+    assetsReceived: document.getElementById('assetsReceived'),
+    assetsPending: document.getElementById('assetsPending'),
+    streakCount: document.getElementById('streakCount'),
+    todayVsAvg: document.getElementById('todayVsAvg'),
+    trendArrow: document.getElementById('trendArrow')
+  },
+
+  insightContent: document.getElementById('insightContent'),
+
+  manualEntryForm: {
+    root: document.getElementById('manualEntryForm'),
+    minutes: document.getElementById('manualMinutes'),
+    category: document.getElementById('manualCategory'),
+    prospects: document.getElementById('manualProspects'),
+    assetsPending: document.getElementById('manualAssetsPending'),
+    assetsReceived: document.getElementById('manualAssetsReceived'),
+    notes: document.getElementById('manualNotes')
+  },
+
+  weeklyData: document.getElementById('weeklyData'),
+  resetModal: document.getElementById('resetModal')
 };
 
-// === INITIALIZATION ===
+// ---------- INIT ----------
 function init() {
   loadData();
+  bindEvents();
+  hydrateInputsFromState();
   renderCategories();
   renderAnxietyButtons();
+  updateBenchmarks();
   renderCallEntries();
   updateTicker();
   generateInsight();
-  
-  // Event Listeners
+  restoreTimerIfNeeded();
+}
+
+function bindEvents() {
   elements.startBtn.addEventListener('click', startTimer);
   elements.stopBtn.addEventListener('click', stopTimer);
   elements.resetBtn.addEventListener('click', resetTimer);
-  
+
   document.getElementById('newCategoryInput').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') addCategory();
   });
 
-  // Start ticker animation
-  setInterval(updateTicker, 1000);
+  const sessionInputs = [
+    elements.notesInput,
+    elements.prospectsInput,
+    elements.assetsPendingInput,
+    elements.assetsReceivedInput
+  ].filter(Boolean);
+
+  sessionInputs.forEach(input => {
+    input.addEventListener('input', syncCurrentCallFromInputs);
+  });
+
+  window.addEventListener('beforeunload', saveData);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) saveData();
+  });
 }
 
-// === LOCAL STORAGE ===
+// ---------- STORAGE ----------
 function loadData() {
-  const saved = localStorage.getItem('advisorflow_data');
-  if (saved) {
-    const parsed = JSON.parse(saved);
-    appState.categories = parsed.categories || appState.categories;
-    appState.activeCategory = parsed.activeCategory || appState.activeCategory;
-    appState.dailyLogs = parsed.dailyLogs || [];
-    appState.benchmarks = parsed.benchmarks || appState.benchmarks;
+  const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('advisorflow_data');
+  if (!raw) return;
+
+  try {
+    const parsed = JSON.parse(raw);
+
+    if (Array.isArray(parsed.categories) && parsed.categories.length) {
+      appState.categories = parsed.categories.map(v => String(v).trim()).filter(Boolean);
+    }
+
+    if (typeof parsed.activeCategory === 'string' && parsed.activeCategory.trim()) {
+      appState.activeCategory = parsed.activeCategory;
+    }
+
+    if (Array.isArray(parsed.dailyLogs)) {
+      appState.dailyLogs = parsed.dailyLogs.map(normalizeLog).filter(Boolean);
+    }
+
+    if (parsed.benchmarks && typeof parsed.benchmarks === 'object') {
+      appState.benchmarks = {
+        bestDayCalls: toInt(parsed.benchmarks.bestDayCalls),
+        avgDailyCalls: toNumber(parsed.benchmarks.avgDailyCalls),
+        lastResetDate: parsed.benchmarks.lastResetDate || null
+      };
+    }
+
+    if (parsed.timer && typeof parsed.timer === 'object') {
+      appState.timer.running = !!parsed.timer.running;
+      appState.timer.startedAt = parsed.timer.startedAt || null;
+      appState.timer.elapsedSeconds = toInt(parsed.timer.elapsedSeconds);
+    }
+
+    if (parsed.currentCall && typeof parsed.currentCall === 'object') {
+      appState.currentCall = {
+        startedAt: parsed.currentCall.startedAt || null,
+        preAnxiety: normalizeRating(parsed.currentCall.preAnxiety),
+        postEase: normalizeRating(parsed.currentCall.postEase),
+        notes: String(parsed.currentCall.notes || ''),
+        prospectsLogged: toInt(parsed.currentCall.prospectsLogged),
+        assetsPendingValue: toNumber(parsed.currentCall.assetsPendingValue),
+        assetsReceivedValue: toNumber(parsed.currentCall.assetsReceivedValue)
+      };
+    }
+  } catch (err) {
+    console.warn('Could not load saved AdvisorFlow data:', err);
   }
 }
 
 function saveData() {
-  const data = {
+  const snapshot = {
     categories: appState.categories,
     activeCategory: appState.activeCategory,
     dailyLogs: appState.dailyLogs,
-    benchmarks: appState.benchmarks
+    benchmarks: appState.benchmarks,
+    timer: {
+      running: appState.timer.running,
+      startedAt: appState.timer.startedAt,
+      elapsedSeconds: appState.timer.elapsedSeconds
+    },
+    currentCall: {
+      ...appState.currentCall
+    }
   };
-  localStorage.setItem('advisorflow_data', JSON.stringify(data));
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
 }
 
-// === TIMER FUNCTIONS ===
+// ---------- HELPERS ----------
+function getLocalDateString(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function toNumber(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function toInt(value) {
+  return Math.max(0, Math.round(toNumber(value)));
+}
+
+function normalizeRating(value) {
+  const n = toInt(value);
+  return n >= 1 && n <= 5 ? n : null;
+}
+
+function normalizeLog(log) {
+  if (!log || typeof log !== 'object') return null;
+
+  const durationSeconds =
+    toInt(log.durationSeconds) ||
+    toInt(log.durationMinutes) * 60;
+
+  return {
+    id: log.id || Date.now() + Math.random(),
+    date: log.date || getLocalDateString(),
+    startedAt: log.startedAt || null,
+    endedAt: log.endedAt || null,
+    durationSeconds,
+    category: String(log.category || 'Phone Calls'),
+    preAnxiety: normalizeRating(log.preAnxiety),
+    postEase: normalizeRating(log.postEase),
+    notes: String(log.notes || ''),
+    prospectsLogged: toInt(log.prospectsLogged),
+    assetsPendingValue: toNumber(log.assetsPendingValue),
+    assetsReceivedValue: toNumber(log.assetsReceivedValue)
+  };
+}
+
+function getDurationSeconds(log) {
+  return toInt(log.durationSeconds) || (toInt(log.durationMinutes) * 60);
+}
+
+function getTodayLogs() {
+  const today = getLocalDateString();
+  return appState.dailyLogs.filter(log => log.date === today);
+}
+
+function sortLogsAscending(logs) {
+  return [...logs].sort((a, b) => {
+    const aTime = a.startedAt || a.id || 0;
+    const bTime = b.startedAt || b.id || 0;
+    return aTime - bTime;
+  });
+}
+
+function sortLogsDescending(logs) {
+  return [...logs].sort((a, b) => {
+    const aTime = a.startedAt || a.id || 0;
+    const bTime = b.startedAt || b.id || 0;
+    return bTime - aTime;
+  });
+}
+
+// ---------- TIMER ----------
+function restoreTimerIfNeeded() {
+  if (!appState.timer.running || !appState.timer.startedAt) {
+    formatTimerDisplay(appState.timer.elapsedSeconds || 0);
+    setTimerButtonState(false);
+    return;
+  }
+
+  appState.currentCall.startedAt = appState.currentCall.startedAt || appState.timer.startedAt;
+  setTimerButtonState(true);
+  tickTimer();
+  appState.timer.intervalId = setInterval(tickTimer, 1000);
+}
+
+function tickTimer() {
+  if (!appState.timer.running || !appState.timer.startedAt) return;
+
+  appState.timer.elapsedSeconds = Math.max(
+    0,
+    Math.floor((Date.now() - appState.timer.startedAt) / 1000)
+  );
+
+  formatTimerDisplay(appState.timer.elapsedSeconds);
+  updateTicker();
+}
+
 function startTimer() {
   if (appState.timer.running) return;
-  
+
+  syncCurrentCallFromInputs();
+
+  const now = Date.now();
   appState.timer.running = true;
-  appState.timer.startTime = Date.now();
-  
-  elements.startBtn.disabled = true;
-  elements.stopBtn.disabled = false;
-  elements.resetBtn.disabled = true;
-  
+  appState.timer.startedAt = now;
+  appState.timer.elapsedSeconds = 0;
+
+  appState.currentCall.startedAt = now;
+
+  setTimerButtonState(true);
+  formatTimerDisplay(0);
+  saveData();
+
+  tickTimer();
+  appState.timer.intervalId = setInterval(tickTimer, 1000);
   playClickSound('start');
 }
 
 function stopTimer() {
   if (!appState.timer.running) return;
-  
+
+  tickTimer();
   clearInterval(appState.timer.intervalId);
+  appState.timer.intervalId = null;
   appState.timer.running = false;
-  
-  // Calculate duration
-  const now = Date.now();
-  const elapsedMs = now - (appState.timer.startTime || now);
-  appState.currentCall.durationMinutes = Math.round(elapsedMs / 1000 / 60);
-  if (appState.currentCall.durationMinutes < 1) appState.currentCall.durationMinutes = 1;
-  
-  elements.startBtn.disabled = false;
-  elements.stopBtn.disabled = true;
-  elements.resetBtn.disabled = false;
-  
-  // Show post-call editing section
-  showPostAnxiety();
-  document.getElementById('notesSection').classList.add('show');
-  
+
+  syncCurrentCallFromInputs();
+
+  if (appState.timer.elapsedSeconds > 0) {
+    saveCallEntry();
+  }
+
+  clearLiveSession();
+  setTimerButtonState(false);
+  formatTimerDisplay(0);
+  updateTicker();
+  renderCallEntries();
+  generateInsight();
+  saveData();
   playClickSound('stop');
 }
 
 function resetTimer() {
   clearInterval(appState.timer.intervalId);
+  appState.timer.intervalId = null;
+
   appState.timer.running = false;
+  appState.timer.startedAt = null;
   appState.timer.elapsedSeconds = 0;
-  appState.currentCall.preAnxiety = null;
-  appState.currentCall.postEase = null;
-  
+
+  clearLiveSession();
+  setTimerButtonState(false);
   formatTimerDisplay(0);
-  hidePostAnxiety();
-  document.getElementById('notesSection').classList.remove('show');
-  elements.callNotesInput.value = '';
-  
-  renderCategories();
-  renderAnxietyButtons();
-  
+  updateTicker();
+  generateInsight();
+  saveData();
   playClickSound('reset');
+}
+
+function setTimerButtonState(isRunning) {
+  elements.startBtn.disabled = isRunning;
+  elements.stopBtn.disabled = !isRunning;
+  elements.resetBtn.disabled = isRunning;
 }
 
 function formatTimerDisplay(totalSeconds) {
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
   const s = totalSeconds % 60;
-  
-  elements.timerDisplay.textContent = 
-    `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+  elements.timerDisplay.textContent =
+    `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-// === POST-ANXIETY SECTION ===
-function showPostAnxiety() {
-  document.getElementById('postAnxietySection').classList.add('show');
-  renderPostEaseButtons();
+// ---------- LIVE SESSION ----------
+function hydrateInputsFromState() {
+  if (elements.notesInput) elements.notesInput.value = appState.currentCall.notes || '';
+  if (elements.prospectsInput) elements.prospectsInput.value = appState.currentCall.prospectsLogged || '';
+  if (elements.assetsPendingInput) elements.assetsPendingInput.value = appState.currentCall.assetsPendingValue || '';
+  if (elements.assetsReceivedInput) elements.assetsReceivedInput.value = appState.currentCall.assetsReceivedValue || '';
 }
 
-function hidePostAnxiety() {
-  document.getElementById('postAnxietySection').classList.remove('show');
-  appState.currentCall.postEase = null;
-  document.getElementById('callNotesInput').value = '';
+function syncCurrentCallFromInputs() {
+  appState.currentCall.notes = elements.notesInput?.value?.trim() || '';
+  appState.currentCall.prospectsLogged = toInt(elements.prospectsInput?.value);
+  appState.currentCall.assetsPendingValue = toNumber(elements.assetsPendingInput?.value);
+  appState.currentCall.assetsReceivedValue = toNumber(elements.assetsReceivedInput?.value);
 }
 
-// === RENDER FUNCTIONS ===
-function renderCategories() {
-  elements.categorySelector.innerHTML = '';
-  
-  appState.categories.forEach(cat => {
-    const btn = document.createElement('button');
-    btn.className = `cat-btn ${appState.activeCategory === cat ? 'active' : ''}`;
-    btn.textContent = cat;
-    btn.onclick = () => selectCategory(cat);
-    
-    if (appState.categories.length > 1) {
-      const deleteBtn = document.createElement('span');
-      deleteBtn.innerHTML = '&times;';
-      deleteBtn.style.cssText = 'margin-left: 8px; cursor: pointer; color: var(--led-red); font-weight: bold;';
-      deleteBtn.onclick = (e) => { e.stopPropagation(); removeCategory(cat); };
-      btn.appendChild(deleteBtn);
-    }
-    
-    elements.categorySelector.appendChild(btn);
-  });
-  
-  // Also populate manual entry dropdown
-  const manualCatSelect = document.getElementById('manualCategory');
-  manualCatSelect.innerHTML = appState.categories.map(c => 
-    `<option value="${c}">${c}</option>`
-  ).join('');
+function clearLiveSession() {
+  appState.timer.startedAt = null;
+  appState.timer.elapsedSeconds = 0;
+
+  appState.currentCall = {
+    startedAt: null,
+    preAnxiety: null,
+    postEase: null,
+    notes: '',
+    prospectsLogged: 0,
+    assetsPendingValue: 0,
+    assetsReceivedValue: 0
+  };
+
+  if (elements.notesInput) elements.notesInput.value = '';
+  if (elements.prospectsInput) elements.prospectsInput.value = '';
+  if (elements.assetsPendingInput) elements.assetsPendingInput.value = '';
+  if (elements.assetsReceivedInput) elements.assetsReceivedInput.value = '';
+
+  renderAnxietyButtons();
+}
+
+// ---------- ENTRY SAVE ----------
+function saveCallEntry() {
+  const startedAt = appState.currentCall.startedAt || appState.timer.startedAt || Date.now();
+  const endedAt = Date.now();
+  const date = getLocalDateString(new Date(startedAt));
+
+  const entry = {
+    id: Date.now(),
+    date,
+    startedAt,
+    endedAt,
+    durationSeconds: appState.timer.elapsedSeconds,
+    category: appState.activeCategory,
+    preAnxiety: appState.currentCall.preAnxiety,
+    postEase: appState.currentCall.postEase,
+    notes: appState.currentCall.notes,
+    prospectsLogged: appState.currentCall.prospectsLogged,
+    assetsPendingValue: appState.currentCall.assetsPendingValue,
+    assetsReceivedValue: appState.currentCall.assetsReceivedValue
+  };
+
+  appState.dailyLogs.unshift(entry);
+  updateBenchmarks();
+}
+
+function addManualEntry() {
+  const minutes = toInt(elements.manualEntryForm.minutes?.value);
+  if (!minutes || minutes < 1) {
+    alert('Please enter a valid duration.');
+    return;
+  }
+
+  const category = elements.manualEntryForm.category?.value || appState.activeCategory;
+  const prospectsLogged = toInt(elements.manualEntryForm.prospects?.value);
+  const assetsPendingValue = toNumber(elements.manualEntryForm.assetsPending?.value);
+  const assetsReceivedValue = toNumber(elements.manualEntryForm.assetsReceived?.value);
+  const notes = elements.manualEntryForm.notes?.value?.trim() || '';
+
+  const entry = {
+    id: Date.now(),
+    date: getLocalDateString(),
+    startedAt: null,
+    endedAt: null,
+    durationSeconds: minutes * 60,
+    category,
+    preAnxiety: null,
+    postEase: null,
+    notes,
+    prospectsLogged,
+    assetsPendingValue,
+    assetsReceivedValue
+  };
+
+  appState.dailyLogs.unshift(entry);
+  updateBenchmarks();
+  renderCallEntries();
+  updateTicker();
+  generateInsight();
+  saveData();
+
+  elements.manualEntryForm.minutes.value = '';
+  if (elements.manualEntryForm.prospects) elements.manualEntryForm.prospects.value = 0;
+  if (elements.manualEntryForm.assetsPending) elements.manualEntryForm.assetsPending.value = 0;
+  if (elements.manualEntryForm.assetsReceived) elements.manualEntryForm.assetsReceived.value = 0;
+  if (elements.manualEntryForm.notes) elements.manualEntryForm.notes.value = '';
+
+  elements.manualEntryForm.root.classList.remove('show');
+}
+
+// ---------- CATEGORIES (CRUD) ----------
+function addCategory() {
+  const input = document.getElementById('newCategoryInput');
+  const raw = input.value.trim();
+  if (!raw) return;
+
+  const exists = appState.categories.some(c => c.toLowerCase() === raw.toLowerCase());
+  if (exists) {
+    alert('That category already exists.');
+    return;
+  }
+
+  appState.categories.push(raw);
+  appState.activeCategory = raw;
+  input.value = '';
+
+  saveData();
+  renderCategories();
+}
+
+function renameCategory(oldName) {
+  const raw = prompt('Rename category:', oldName);
+  if (!raw) return;
+
+  const newName = raw.trim();
+  if (!newName) return;
+
+  const duplicate = appState.categories.some(
+    c => c.toLowerCase() === newName.toLowerCase() && c !== oldName
+  );
+  if (duplicate) {
+    alert('That category name already exists.');
+    return;
+  }
+
+  appState.categories = appState.categories.map(c => c === oldName ? newName : c);
+  appState.dailyLogs = appState.dailyLogs.map(log =>
+    log.category === oldName ? { ...log, category: newName } : log
+  );
+
+  if (appState.activeCategory === oldName) {
+    appState.activeCategory = newName;
+  }
+
+  saveData();
+  renderCategories();
+  renderCallEntries();
+}
+
+function removeCategory(category) {
+  if (appState.categories.length <= 1) {
+    alert('You need at least one category.');
+    return;
+  }
+
+  const ok = confirm(`Delete "${category}"?\n\nPast entries will stay in your history.`);
+  if (!ok) return;
+
+  appState.categories = appState.categories.filter(c => c !== category);
+
+  if (appState.activeCategory === category) {
+    appState.activeCategory = appState.categories[0];
+  }
+
+  saveData();
+  renderCategories();
 }
 
 function selectCategory(category) {
@@ -657,305 +556,181 @@ function selectCategory(category) {
   renderCategories();
 }
 
-// Pre-Anxiety Buttons (1-5 where 5 is most anxious)
+function renderCategories() {
+  elements.categorySelector.innerHTML = '';
+
+  appState.categories.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = `cat-btn ${appState.activeCategory === cat ? 'active' : ''}`;
+    btn.type = 'button';
+    btn.style.display = 'inline-flex';
+    btn.style.alignItems = 'center';
+    btn.style.gap = '8px';
+
+    const label = document.createElement('span');
+    label.textContent = cat;
+    btn.appendChild(label);
+
+    const tools = document.createElement('span');
+    tools.style.display = 'inline-flex';
+    tools.style.gap = '6px';
+    tools.style.marginLeft = '4px';
+
+    const edit = document.createElement('span');
+    edit.textContent = '✎';
+    edit.title = 'Rename category';
+    edit.style.cursor = 'pointer';
+    edit.style.opacity = '0.8';
+    edit.onclick = (e) => {
+      e.stopPropagation();
+      renameCategory(cat);
+    };
+
+    tools.appendChild(edit);
+
+    if (appState.categories.length > 1) {
+      const del = document.createElement('span');
+      del.innerHTML = '&times;';
+      del.title = 'Delete category';
+      del.style.cursor = 'pointer';
+      del.style.color = 'var(--led-red)';
+      del.onclick = (e) => {
+        e.stopPropagation();
+        removeCategory(cat);
+      };
+      tools.appendChild(del);
+    }
+
+    btn.appendChild(tools);
+    btn.onclick = () => selectCategory(cat);
+
+    elements.categorySelector.appendChild(btn);
+  });
+
+  elements.manualEntryForm.category.innerHTML = appState.categories
+    .map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`)
+    .join('');
+}
+
+// ---------- RATINGS ----------
 function renderAnxietyButtons() {
-  elements.preAnxietyButtons.innerHTML = '';
-  
+  renderRatingGroup(
+    elements.preAnxietyButtons,
+    appState.currentCall.preAnxiety,
+    selectPreAnxiety
+  );
+
+  if (elements.postEaseButtons) {
+    renderRatingGroup(
+      elements.postEaseButtons,
+      appState.currentCall.postEase,
+      selectPostEase
+    );
+  }
+}
+
+function renderRatingGroup(container, selectedValue, onSelect) {
+  if (!container) return;
+
+  container.innerHTML = '';
   for (let i = 1; i <= 5; i++) {
     const btn = document.createElement('button');
-    btn.className = `rating-btn ${appState.currentCall.preAnxiety === i ? 'selected' : ''}`;
+    btn.type = 'button';
+    btn.className = `rating-btn ${selectedValue === i ? 'selected' : ''}`;
     btn.textContent = i;
-    btn.onclick = () => selectPreAnxiety(i);
-    elements.preAnxietyButtons.appendChild(btn);
+    btn.onclick = () => onSelect(i);
+    container.appendChild(btn);
   }
 }
 
 function selectPreAnxiety(value) {
   appState.currentCall.preAnxiety = value;
   renderAnxietyButtons();
-}
-
-// Post-Ease Buttons (1-5 where 5 is easiest - opposite scale!)
-function renderPostEaseButtons() {
-  elements.postEaseButtons.innerHTML = '';
-  
-  for (let i = 1; i <= 5; i++) {
-    const btn = document.createElement('button');
-    // Note: Higher number = easier call (opposite of pre-anxiety)
-    btn.className = `rating-btn ${appState.currentCall.postEase === i ? 'selected' : ''}`;
-    btn.textContent = i;
-    btn.onclick = () => selectPostEase(i);
-    elements.postEaseButtons.appendChild(btn);
-  }
+  saveData();
 }
 
 function selectPostEase(value) {
   appState.currentCall.postEase = value;
-  renderPostEaseButtons();
+  renderAnxietyButtons();
+  saveData();
 }
 
-// === CALL ENTRY RENDERING (WITH EDITABLE FIELDS) ===
+// ---------- RENDER LOGS ----------
 function renderCallEntries() {
-  const today = new Date().toISOString().split('T')[0];
-  const todaysCalls = appState.dailyLogs.filter(log => log.date === today);
-  
+  renderWeeklyData();
+
+  const todaysCalls = sortLogsDescending(getTodayLogs());
   elements.callEntriesContainer.innerHTML = '';
-  
-  if (todaysCalls.length === 0) {
+
+  if (!todaysCalls.length) {
     elements.callEntriesContainer.innerHTML = `
-      <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
-        No calls logged today. Start the timer to log your first one!
+      <div style="text-align:center; padding:40px; color:var(--text-secondary);">
+        No calls logged today. Start the timer to log your first one.
       </div>
     `;
-    
-    // Show weekly data even with no calls
-    renderWeeklyData();
     return;
   }
-  
-  todaysCalls.forEach((call, index) => {
+
+  todaysCalls.forEach(call => {
     const entry = document.createElement('div');
     entry.className = 'call-entry';
-    
-    let anxietyDisplay = '';
-    let easeDisplay = '';
-    
-    if (call.preAnxiety !== null || call.postEase !== null) {
-      const preText = call.preAnxiety !== null ? `${call.preAnxiety}/5` : '-';
-      const postText = call.postEase !== null ? `${call.postEase}/5` : '-';
-      
-      anxietyDisplay = `<span class="call-meta">📊 Pre: ${preText} | 😊 Post: ${postText}</span>`;
-    }
-    
-    let editButtonsHtml = '';
-    if (todaysCalls.length === 1) { // Only allow editing today's entries
-      editButtonsHtml = `
-        <div class="edit-actions">
-          <button class="action-btn" onclick="toggleMetricsEdit(${call.id})">✏️ Edit Metrics</button>
-          <button class="action-btn" style="color: var(--led-red);" onclick="deleteCallEntry(${call.id})">🗑️ Delete</button>
-        </div>
-      `;
-    }
-    
+
+    const startLabel = call.startedAt
+      ? new Date(call.startedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+      : 'Manual entry';
+
     entry.innerHTML = `
       <div class="call-header">
         <div>
-          <strong>${call.category}</strong> • ${formatTime(call.durationMinutes * 60)}
+          <strong>${escapeHtml(call.category)}</strong>
+          <div class="call-time">${startLabel} • ${formatTime(getDurationSeconds(call))}</div>
         </div>
-        <div style="text-align: right;">
-          <span class="ticker-value">$${(call.assetsReceivedValue || 0).toLocaleString()}</span>
-        </div>
-      </div>
-      ${anxietyDisplay}
-      ${call.prospectsLogged > 0 ? `<span class="call-meta">📈 ${call.prospectsLogged} prospect(s)</span>` : ''}
-      
-      <!-- EDITABLE METRICS SECTION (Initially Hidden) -->
-      <div class="metrics-edit" id="metricsEdit-${call.id}" style="display: none;">
-        <div class="metric-field">
-          <span class="metric-label">Prospects:</span>
-          <input type="number" class="metric-input" value="${call.prospectsLogged || 0}" min="0" onchange="updateCallMetric(${call.id}, 'prospects', this.value)">
-        </div>
-        <div class="metric-field">
-          <span class="metric-label">$ Pending:</span>
-          <input type="number" class="metric-input" value="${call.assetsPendingValue || 0}" min="0" onchange="updateCallMetric(${call.id}, 'pending', this.value)">
-        </div>
-        <div class="metric-field">
-          <span class="metric-label">$ Received:</span>
-          <input type="number" class="metric-input" value="${call.assetsReceivedValue || 0}" min="0" onchange="updateCallMetric(${call.id}, 'received', this.value)">
+        <div style="text-align:right;">
+          <span class="ticker-value">${currencyFormatter.format(call.assetsReceivedValue || 0)}</span>
         </div>
       </div>
-      
-      ${editButtonsHtml}
-      
-      ${call.notes ? `<div class="call-note">"${call.notes}"</div>` : ''}
+
+      <div class="call-meta" style="margin-bottom:5px; flex-wrap:wrap;">
+        ${call.preAnxiety ? `<span>📊 Pre: ${call.preAnxiety}/5</span>` : ''}
+        ${call.postEase ? `<span>😊 Post: ${call.postEase}/5</span>` : ''}
+        ${call.prospectsLogged ? `<span>📈 Prospects: ${call.prospectsLogged}</span>` : ''}
+        ${(call.assetsPendingValue || 0) > 0 ? `<span>⏳ Pending: ${currencyFormatter.format(call.assetsPendingValue)}</span>` : ''}
+      </div>
+
+      ${call.notes ? `<div class="call-note">"${escapeHtml(call.notes)}"</div>` : ''}
     `;
-    
+
     elements.callEntriesContainer.appendChild(entry);
   });
-  
-  renderWeeklyData();
 }
 
-// === EDITABLE METRIC FUNCTIONS ===
-function toggleMetricsEdit(callId) {
-  const metricsDiv = document.getElementById(`metricsEdit-${callId}`);
-  if (metricsDiv.style.display === 'none') {
-    metricsDiv.style.display = 'grid';
-  } else {
-    metricsDiv.style.display = 'none';
-  }
-}
-
-function updateCallMetric(callId, metricType, value) {
-  const callIndex = appState.dailyLogs.findIndex(l => l.id === callId);
-  if (callIndex === -1) return;
-  
-  const newValue = parseInt(value) || 0;
-  
-  if (metricType === 'prospects') {
-    appState.dailyLogs[callIndex].prospectsLogged = newValue;
-  } else if (metricType === 'pending') {
-    appState.dailyLogs[callIndex].assetsPendingValue = newValue;
-  } else if (metricType === 'received') {
-    appState.dailyLogs[callIndex].assetsReceivedValue = newValue;
-  }
-  
-  saveData();
-  updateTicker();
-  generateInsight();
-}
-
-function deleteCallEntry(callId) {
-  if (!confirm('Delete this call entry? This cannot be undone.')) return;
-  
-  appState.dailyLogs = appState.dailyLogs.filter(l => l.id !== callId);
-  saveData();
-  renderCallEntries();
-  updateTicker();
-  generateInsight();
-}
-
-// === SAVE CALL ENTRY (FROM TIMER) ===
-function saveCallEntry() {
-  if (!appState.currentCall.durationMinutes || appState.currentCall.durationMinutes < 1) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  
-  const callEntry = {
-    id: Date.now(),
-    date: today,
-    startTime: null, // From timer start time would go here if tracked
-    durationMinutes: appState.currentCall.durationMinutes,
-    category: appState.activeCategory,
-    preAnxiety: appState.currentCall.preAnxiety || 3,
-    postEase: appState.currentCall.postEase !== null ? appState.currentCall.postEase : 3,
-    notes: elements.callNotesInput.value,
-    prospectsLogged: appState.currentCall.prospectsLogged || 0,
-    assetsPendingValue: appState.currentCall.assetsPendingValue || 0,
-    assetsReceivedValue: appState.currentCall.assetsReceivedValue || 0
-  };
-  
-  appState.dailyLogs.unshift(callEntry);
-  saveData();
-  
-  // Reset form state
-  hidePostAnxiety();
-  renderCategories();
-  renderCallEntries();
-  updateTicker();
-  generateInsight();
-}
-
-// === MANUAL ENTRY ===
-function addManualEntry() {
-  const minutes = parseInt(document.getElementById('manualMinutes').value);
-  if (!minutes || minutes < 1) {
-    alert('Please enter a valid duration');
-    return;
-  }
-  
-  const category = document.getElementById('manualCategory').value;
-  
-  const callEntry = {
-    id: Date.now(),
-    date: new Date().toISOString().split('T')[0],
-    startTime: null,
-    durationMinutes: minutes,
-    category: category,
-    preAnxiety: 3, // Default for manual entry
-    postEase: 3,
-    notes: '',
-    prospectsLogged: 0,
-    assetsPendingValue: 0,
-    assetsReceivedValue: 0
-  };
-  
-  appState.dailyLogs.unshift(callEntry);
-  saveData();
-  renderCallEntries();
-  updateTicker();
-  generateInsight();
-  
-  document.getElementById('manualEntryForm').classList.remove('show');
-}
-
-// === ADD CATEGORY ===
-function addCategory() {
-  const input = document.getElementById('newCategoryInput');
-  const name = input.value.trim();
-  
-  if (!name) return;
-  if (appState.categories.includes(name)) {
-    alert(`"${name}" already exists!`);
-    return;
-  }
-  
-  appState.categories.push(name);
-  saveData();
-  renderCategories();
-  input.value = '';
-}
-
-function removeCategory(category) {
-  if (appState.categories.length <= 1) {
-    alert('You need at least one category!');
-    return;
-  }
-  
-  if (!confirm(`Delete "${category}"? Past entries will remain but won't have this category.`)) return;
-  
-  appState.categories = appState.categories.filter(c => c !== category);
-  saveData();
-  renderCategories();
-}
-
-// === WEEKLY DATA RENDERING ===
 function renderWeeklyData() {
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-  
-  const weekLogs = appState.dailyLogs.filter(log => 
-    new Date(log.date) >= sevenDaysAgo
-  );
-  
-  // Build empty 7-day grid first
-  const weekData = {};
-  for (let i = 0; i < 7; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() - (6 - i));
-    const dateStr = date.toISOString().split('T')[0];
-    
-    weekData[dateStr] = {
-      name: date.toLocaleDateString('en-US', { weekday: 'short' }),
-      calls: 0,
-      timeMinutes: 0,
-      revenue: 0,
-      prospects: 0
-    };
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    days.push({
+      date: getLocalDateString(d),
+      name: d.toLocaleDateString('en-US', { weekday: 'short' })
+    });
   }
-  
-  // Fill in actual data
-  for (const call of weekLogs) {
-    if (weekData[call.date]) {
-      weekData[call.date].calls++;
-      weekData[call.date].timeMinutes += call.durationMinutes;
-      weekData[call.date].revenue += (call.assetsReceivedValue || 0);
-      weekData[call.date].prospects += (call.prospectsLogged || 0);
-    }
-  }
-  
+
+  const bestDayCalls = appState.benchmarks.bestDayCalls || 0;
+
   elements.weeklyData.innerHTML = `
     <div class="weekly-grid">
-      ${Object.values(weekData).map(day => {
-        const isBest = day.calls === appState.benchmarks.bestDayCalls && day.calls > 0;
+      ${days.map(day => {
+        const dayLogs = appState.dailyLogs.filter(log => log.date === day.date);
+        const calls = dayLogs.length;
+        const seconds = dayLogs.reduce((sum, log) => sum + getDurationSeconds(log), 0);
+        const isBest = bestDayCalls > 0 && calls === bestDayCalls;
+
         return `
-          <div style="position: relative;">
+          <div class="day-card" style="position:relative;">
             ${isBest ? '<span class="day-best">🏆 Best</span>' : ''}
             <div class="day-name">${day.name}</div>
-            <div class="day-value" style="font-size: 20px;">${day.calls}</div>
-            <small>${formatTime(day.timeMinutes * 60)}</small><br>
-            <small style="color: var(--accent-green);">$${(day.revenue / 1000).toFixed(0)}K</small><br>
-            <small style="color: var(--text-secondary);">${day.prospects} prospects</small>
+            <div class="day-value">${calls}</div>
+            <small>${formatTime(seconds)}</small>
           </div>
         `;
       }).join('')}
@@ -963,178 +738,191 @@ function renderWeeklyData() {
   `;
 }
 
-// === TICKER UPDATE (SCROLLING) ===
+// ---------- BENCHMARKS ----------
+function getBenchmarkLogs() {
+  const resetDate = appState.benchmarks.lastResetDate;
+  if (!resetDate) return [...appState.dailyLogs];
+  return appState.dailyLogs.filter(log => log.date >= resetDate);
+}
+
+function updateBenchmarks() {
+  const logs = getBenchmarkLogs();
+  const byDay = new Map();
+
+  logs.forEach(log => {
+    const existing = byDay.get(log.date) || 0;
+    byDay.set(log.date, existing + 1);
+  });
+
+  const dayCounts = [...byDay.values()];
+  appState.benchmarks.bestDayCalls = dayCounts.length ? Math.max(...dayCounts) : 0;
+  appState.benchmarks.avgDailyCalls = dayCounts.length
+    ? dayCounts.reduce((sum, n) => sum + n, 0) / dayCounts.length
+    : 0;
+}
+
+// ---------- TICKER ----------
 function updateTicker() {
-  const today = new Date().toISOString().split('T')[0];
-  const todaysCalls = appState.dailyLogs.filter(log => log.date === today);
-  
+  const todaysCalls = getTodayLogs();
+
   const totalCalls = todaysCalls.length;
-  const totalTimeMinutes = todaysCalls.reduce((sum, l) => sum + (l.durationMinutes || 0), 0);
-  const prospectsCount = todaysCalls.reduce((sum, l) => sum + (l.prospectsLogged || 0), 0);
-  const assetsReceived = todaysCalls.reduce((sum, l) => sum + (l.assetsReceivedValue || 0), 0);
-  const assetsPending = todaysCalls.reduce((sum, l) => sum + (l.assetsPendingValue || 0), 0);
-  
-  // Streak calculation (consecutive days with at least 1 call)
+  const completedSeconds = todaysCalls.reduce((sum, log) => sum + getDurationSeconds(log), 0);
+  const liveSeconds = appState.timer.running ? appState.timer.elapsedSeconds : 0;
+  const totalSeconds = completedSeconds + liveSeconds;
+
+  const prospectsCount = todaysCalls.reduce((sum, log) => sum + (log.prospectsLogged || 0), 0);
+  const assetsReceived = todaysCalls.reduce((sum, log) => sum + (log.assetsReceivedValue || 0), 0);
+  const assetsPending = todaysCalls.reduce((sum, log) => sum + (log.assetsPendingValue || 0), 0);
+
+  const streak = calculateStreak();
+  const avgDailyCalls = appState.benchmarks.avgDailyCalls || 0;
+  const diff = totalCalls - avgDailyCalls;
+
+  elements.tickerBar.callsToday.textContent = String(totalCalls);
+  elements.tickerBar.timeSpent.textContent = formatTime(totalSeconds);
+  elements.tickerBar.prospectsCount.textContent = String(prospectsCount);
+  elements.tickerBar.assetsReceived.textContent = currencyFormatter.format(assetsReceived);
+  elements.tickerBar.assetsPending.textContent = currencyFormatter.format(assetsPending);
+  elements.tickerBar.streakCount.textContent = `🔥${streak}`;
+
+  if (appState.dailyLogs.length) {
+    elements.tickerBar.todayVsAvg.textContent = `${totalCalls} today / ${avgDailyCalls.toFixed(1)} avg`;
+
+    if (diff > 0.25) {
+      elements.tickerBar.trendArrow.textContent = '⬆️';
+    } else if (diff < -0.25) {
+      elements.tickerBar.trendArrow.textContent = '⬇️';
+    } else {
+      elements.tickerBar.trendArrow.textContent = '➡️';
+    }
+  } else {
+    elements.tickerBar.todayVsAvg.textContent = 'vs 0 calls';
+    elements.tickerBar.trendArrow.textContent = '';
+  }
+}
+
+function calculateStreak() {
+  const uniqueDays = new Set(appState.dailyLogs.map(log => log.date));
   let streak = 0;
+
   for (let i = 0; i < 365; i++) {
-    const checkDate = new Date();
-    checkDate.setDate(checkDate.getDate() - i);
-    const dateStr = checkDate.toISOString().split('T')[0];
-    
-    if (appState.dailyLogs.some(log => log.date === dateStr)) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = getLocalDateString(d);
+
+    if (uniqueDays.has(key)) {
       streak++;
     } else if (i > 0) {
       break;
     }
   }
-  
-  // Build ticker items array
-  const tickerItems = [
-    { label: 'Calls Today', value: totalCalls },
-    { label: 'Time Spent', value: formatTime(totalTimeMinutes * 60), isTime: true },
-    { label: 'Prospects', value: prospectsCount },
-    { label: '$ Assets (Received)', value: `$${assetsReceived.toLocaleString()}` },
-    { label: '$ Pending', value: `$${assetsPending.toLocaleString()}`, isNegative: assetsPending > 0 },
-    { label: 'Streak', value: `🔥${streak}` },
-    { label: 'Today vs Avg', value: totalCalls.toFixed(1) + '/'+ (appState.benchmarks.avgDailyCalls || 0).toFixed(1), isAvg: true }
-  ];
-  
-  // Create ticker HTML
-  const track = document.getElementById('tickerTrack');
-  let html = '';
-  
-  for (const item of tickerItems) {
-    let valueClass = 'ticker-value';
-    if (item.isNegative) valueClass += ' negative';
-    
-    html += `
-      <div class="ticker-item">
-        <span class="ticker-label">${item.label}</span>
-        <span class="${valueClass}">${item.value}</span>
-      </div>
-    `;
-  }
-  
-  track.innerHTML = html + html; // Duplicate for seamless scroll
-  
-  // Update progress bar
-  const bestDay = appState.benchmarks.bestDayCalls || totalCalls;
-  const progressPercent = Math.min(100, (totalCalls / bestDay) * 100);
-  document.getElementById('progressBar').style.width = `${progressPercent}%`;
-  document.getElementById('progressText').textContent = `vs Best: ${bestDay}`;
+
+  return streak;
 }
 
-// === INSIGHTS GENERATION (SCIENCE-BACKED) ===
+// ---------- INSIGHTS ----------
 function generateInsight() {
-  const insights = [
-    // Mind Lie Detection (Cognitive Behavioral Science - Beck, 1976)
+  const logs = sortLogsAscending(appState.dailyLogs);
+  const todayLogs = sortLogsAscending(getTodayLogs());
+
+  const insightFns = [
+    // 1) Anxiety bias / prediction mismatch
     () => {
-      if (!appState.dailyLogs.length) return null;
-      
-      const callsWithAnxiety = appState.dailyLogs.filter(l => l.preAnxiety !== null && l.postEase !== null);
-      if (callsWithAnxiety.length < 3) return null;
-      
-      const avgPreAnxiety = callsWithAnxiety.reduce((sum, c) => sum + c.preAnxiety, 0) / callsWithAnxiety.length;
-      const avgPostEase = callsWithAnxiety.reduce((sum, c) => sum + c.postEase, 0) / callsWithAnxiety.length;
-      
-      // Convert postEase to anxiety-like scale (5 ease = 1 anxiety equivalent)
-      const avgActualDifficulty = 6 - avgPostEase;
-      
-      if (avgPreAnxiety > avgActualDifficulty + 1.5) {
-        return `Mind Lie Detected! 🧠 You estimated <span class="insight-highlight">${avgPreAnxiety.toFixed(1)}</span> anxiety before calls, but reality was only <span class="insight-highlight">${avgActualDifficulty.toFixed(1)}</span>. Your brain systematically overestimates difficulty—a pattern psychologists call "affective forecasting bias." Each action rewires this prediction loop.`;
+      const rated = logs.filter(l => l.preAnxiety && l.postEase);
+      if (rated.length < 3) return null;
+
+      const avgPre = rated.reduce((sum, l) => sum + l.preAnxiety, 0) / rated.length;
+      const avgPost = rated.reduce((sum, l) => sum + l.postEase, 0) / rated.length;
+
+      if (avgPre >= 3.5 && avgPost >= 3) {
+        return `Prediction gap showing up: you tend to approach calls with <span class="insight-highlight">${avgPre.toFixed(1)}/5</span> pre-call anxiety, but your average post-call ease is <span class="insight-highlight">${avgPost.toFixed(1)}/5</span>. That's useful evidence that anticipation may be overstating the threat.`;
       }
       return null;
     },
-    
-    // Warm-Up Effect (Performance Psychology)
+
+    // 2) Warm-up effect
     () => {
-      const today = new Date().toISOString().split('T')[0];
-      const todaysCalls = appState.dailyLogs.filter(l => l.date === today && l.preAnxiety !== null).sort((a, b) => a.id - b.id);
-      
-      if (todaysCalls.length < 2) return null;
-      
-      const firstCall = todaysCalls[0].preAnxiety;
-      const lastCall = todaysCalls[todaysCalls.length - 1].preAnxiety;
-      
-      if (firstCall > lastCall + 1) {
-        return `Warm-Up Effect in Action! 🔥 Your first call averaged <span class="insight-highlight">${firstCall}</span> anxiety, dropping to <span class="insight-highlight">${lastCall}</span> by the end. This mirrors athletic warm-ups—your brain builds momentum with each action.`;
+      const ratedToday = todayLogs.filter(l => l.preAnxiety);
+      if (ratedToday.length < 2) return null;
+
+      const first = ratedToday[0].preAnxiety;
+      const last = ratedToday[ratedToday.length - 1].preAnxiety;
+
+      if (first >= last + 1) {
+        return `Warm-up effect: your first rated call today was <span class="insight-highlight">${first}/5</span> on anxiety, and later calls dropped to <span class="insight-highlight">${last}/5</span>. Use an easy opener call to lower the friction on the harder ones.`;
       }
       return null;
     },
-    
-    // Streak Motivation (Behavioral Economics - Loss Aversion)
+
+    // 3) Streak
     () => {
-      let streak = 0;
-      for (let i = 0; i < 365; i++) {
-        const checkDate = new Date();
-        checkDate.setDate(checkDate.getDate() - i);
-        const dateStr = checkDate.toISOString().split('T')[0];
-        
-        if (appState.dailyLogs.some(log => log.date === dateStr)) {
-          streak++;
-        } else if (i > 0) {
-          break;
-        }
+      const streak = calculateStreak();
+
+      if (streak >= 10) {
+        return `Momentum is real: you’re on a <span class="insight-highlight">${streak}-day streak</span>. At this point, consistency starts to feel less like effort and more like identity.`;
       }
-      
-      if (streak >= 5 && streak < 10) {
-        return `Streak Alert! 🔥 ${streak} day(s) in a row. Behavioral economics shows humans are motivated by "loss aversion"—the pain of breaking a streak feels worse than the joy of starting one.`;
-      } else if (streak >= 10) {
-        return `Incredible Momentum! 🚀 ${streak} days strong! Research on habit formation (~66 days) shows behavior shifts from "willpower-dependent" to "identity-based."`;
+
+      if (streak >= 5) {
+        return `You’ve built a <span class="insight-highlight">${streak}-day streak</span>. Protecting existing momentum is often easier than restarting from zero.`;
       }
+
       return null;
     },
-    
-    // Revenue Per Hour (Economic Perspective)
+
+    // 4) Revenue efficiency
     () => {
-      const today = new Date().toISOString().split('T')[0];
-      const todaysCalls = appState.dailyLogs.filter(l => l.date === today);
-      
-      if (!todaysCalls.length) return null;
-      
-      const totalRevenue = todaysCalls.reduce((sum, l) => sum + (l.assetsReceivedValue || 0), 0);
-      const totalTimeMinutes = todaysCalls.reduce((sum, l) => sum + (l.durationMinutes || 0), 0);
-      
-      if (totalTimeMinutes > 0 && totalRevenue > 0) {
-        const revenuePerHour = (totalRevenue / totalTimeMinutes) * 60;
-        
-        // Historical comparison
-        let histTotalRev = 0, histTotalMin = 0;
-        for (const call of appState.dailyLogs) {
-          histTotalRev += call.assetsReceivedValue || 0;
-          histTotalMin += call.durationMinutes || 0;
-        }
-        
-        const avgRevenuePerHour = histTotalMin > 0 ? (histTotalRev / histTotalMin) * 60 : 0;
-        
-        if (revenuePerHour > avgRevenuePerHour * 1.2 && avgRevenuePerHour > 0) {
-          return `Efficiency Champion! 💰 You're earning <span class="insight-highlight">$${revenuePerHour.toFixed(0)}</span>/hour today, above your average of <span class="insight-highlight">$${avgRevenuePerHour.toFixed(0)}</span>. Protect these hours.`;
-        } else if (totalRevenue > 10000) {
-          return `Strong Value Creation! 💎 <span class="insight-highlight">$${totalRevenue.toLocaleString()}</span> in assets today from ${todaysCalls.length} calls. That's the impact that matters.`;
+      const totalRevenue = todayLogs.reduce((sum, l) => sum + (l.assetsReceivedValue || 0), 0);
+      const totalSeconds = todayLogs.reduce((sum, l) => sum + getDurationSeconds(l), 0);
+
+      if (totalRevenue <= 0 || totalSeconds <= 0) return null;
+
+      const revenuePerHour = (totalRevenue / totalSeconds) * 3600;
+
+      const allRevenue = appState.dailyLogs.reduce((sum, l) => sum + (l.assetsReceivedValue || 0), 0);
+      const allSeconds = appState.dailyLogs.reduce((sum, l) => sum + getDurationSeconds(l), 0);
+      const historicalRph = allSeconds > 0 ? (allRevenue / allSeconds) * 3600 : 0;
+
+      if (historicalRph > 0 && revenuePerHour > historicalRph * 1.15) {
+        return `Strong efficiency day: you're tracking at <span class="insight-highlight">${currencyFormatter.format(revenuePerHour)}/hour</span>, ahead of your historical pace of <span class="insight-highlight">${currencyFormatter.format(historicalRph)}/hour</span>.`;
+      }
+
+      if (totalRevenue > 0) {
+        return `Value creation is showing up: <span class="insight-highlight">${currencyFormatter.format(totalRevenue)}</span> received today. That's tangible reinforcement for the work.`;
+      }
+
+      return null;
+    },
+
+    // 5) Benchmark chase
+    () => {
+      const todayCount = todayLogs.length;
+      const best = appState.benchmarks.bestDayCalls || 0;
+
+      if (best > 0 && todayCount > 0 && todayCount < best) {
+        const remaining = best - todayCount;
+        if (remaining <= 3) {
+          return `You’re <span class="insight-highlight">${remaining}</span> logged call(s) away from matching your best benchmark day of <span class="insight-highlight">${best}</span>.`;
         }
       }
       return null;
     },
-    
-    // Default Uplifting Message
+
+    // Fallbacks
     () => {
-      const today = new Date().toISOString().split('T')[0];
-      const todaysCalls = appState.dailyLogs.filter(l => l.date === today).length;
-      
-      if (todaysCalls > 0) {
-        return `You've made <span class="insight-highlight">${todaysCalls} call(s)</span> today. Research shows small, consistent behaviors create significant long-term results. You're building momentum.`;
+      if (todayLogs.length > 0) {
+        return `You’ve logged <span class="insight-highlight">${todayLogs.length}</span> item(s) today. Small wins compound when they’re visible.`;
       }
-      
+
       if (appState.dailyLogs.length > 0) {
-        return `You've logged <span class="insight-highlight">${appState.dailyLogs.length} total call(s)</span>. This data is your compass—each entry helps you see patterns and make better decisions.`;
+        return `Your tracker already holds <span class="insight-highlight">${appState.dailyLogs.length}</span> historical entries. That gives you real signal, not vibes.`;
       }
-      
-      return `Ready to build momentum? Starting just one call changes the equation from "avoidance" to action. The hardest part is always beginning.`;
+
+      return `Start with one entry. Action reduces uncertainty faster than thinking about action.`;
     }
   ];
-  
-  for (const insightFn of insights) {
-    const result = insightFn();
+
+  for (const fn of insightFns) {
+    const result = fn();
     if (result) {
       elements.insightContent.innerHTML = result;
       return;
@@ -1142,77 +930,82 @@ function generateInsight() {
   }
 }
 
-// === UTILITY FUNCTIONS ===
-function formatTime(totalSeconds) {
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
-  
-  if (h > 0) {
-    return `${h}h ${m}m`;
-  }
-  return `${m}m`;
-}
-
+// ---------- AUDIO ----------
 function playClickSound(type = 'click') {
-  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  
-  const oscillator = audioCtx.createOscillator();
-  const gainNode = audioCtx.createGain();
-  
-  oscillator.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
-  
-  if (type === 'click') {
-    oscillator.frequency.value = 800;
-    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-    oscillator.start(audioCtx.currentTime);
-    oscillator.stop(audioCtx.currentTime + 0.1);
-  } else if (type === 'start') {
-    oscillator.frequency.value = 600;
-    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-    oscillator.start(audioCtx.currentTime);
-    oscillator.stop(audioCtx.currentTime + 0.15);
-  } else if (type === 'stop') {
-    oscillator.frequency.value = 400;
-    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-    oscillator.start(audioCtx.currentTime);
-    oscillator.stop(audioCtx.currentTime + 0.2);
-  } else if (type === 'reset') {
-    oscillator.frequency.value = 300;
-    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
-    oscillator.start(audioCtx.currentTime);
-    oscillator.stop(audioCtx.currentTime + 0.25);
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+
+    const settings = {
+      click: { freq: 800, dur: 0.08, gain: 0.07 },
+      start: { freq: 600, dur: 0.12, gain: 0.10 },
+      stop:  { freq: 400, dur: 0.14, gain: 0.10 },
+      reset: { freq: 300, dur: 0.18, gain: 0.08 }
+    }[type] || { freq: 700, dur: 0.08, gain: 0.06 };
+
+    osc.frequency.value = settings.freq;
+    gain.gain.setValueAtTime(settings.gain, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + settings.dur);
+
+    osc.start(now);
+    osc.stop(now + settings.dur);
+  } catch (err) {
+    console.warn('Audio unavailable:', err);
   }
 }
 
-// === BENCHMARK RESET ===
+// ---------- RESET BENCHMARKS ----------
 function resetBenchmarks() {
-  document.getElementById('resetModal').classList.add('show');
+  elements.resetModal.classList.add('show');
 }
 
 function confirmReset() {
-  appState.benchmarks = { bestDayCalls: 0, avgDailyCalls: 0, lastResetDate: new Date().toISOString().split('T')[0] };
-  
-  // Calculate new averages from existing data
-  const allDates = [...new Set(appState.dailyLogs.map(l => l.date))];
-  appState.benchmarks.avgDailyCalls = allDates.length > 0 ? appState.dailyLogs.length / allDates.length : 0;
-  
-  saveData();
+  appState.benchmarks = {
+    bestDayCalls: 0,
+    avgDailyCalls: 0,
+    lastResetDate: getLocalDateString()
+  };
+
   closeModal();
   updateTicker();
+  renderCallEntries();
   generateInsight();
+  saveData();
 }
 
 function closeModal() {
-  document.getElementById('resetModal').classList.remove('show');
+  elements.resetModal.classList.remove('show');
 }
 
-// === INIT ON LOAD ===
+// ---------- DISPLAY HELPERS ----------
+function formatTime(totalSeconds) {
+  const seconds = Math.max(0, toInt(totalSeconds));
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 window.addEventListener('DOMContentLoaded', init);
 </script>
-</body>
-</html>
