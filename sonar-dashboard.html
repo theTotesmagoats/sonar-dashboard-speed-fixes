@@ -2,273 +2,741 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SECURE TERMINAL // FORENSIC HUD</title>
+    <title>Mars Brigade Commander v0.5</title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
-        body {
-            margin: 0;
-            padding: 15px;
-            background-color: #020202; /* Strictly black/dark background, no amber flash */
-            color: #ffb000;
-            font-family: 'Courier New', Courier, monospace;
-            height: 100vh;
-            width: 100vw;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #1a1a2e; 
+            color: #eee; 
+            font-family: 'Courier New', monospace; 
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            border: 2px solid #ffb000; /* Bezel explicitly locked to browser window */
-            text-shadow: 0 0 3px rgba(255, 176, 0, 0.4);
         }
-        ::selection {
-            background: #ffb000;
-            color: #020202;
-        }
-        #hud {
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 1px solid #ffb000;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-        .hud-stat {
-            display: flex;
-            flex-direction: column;
-        }
-        .hud-label {
-            font-size: 0.7rem;
-            opacity: 0.7;
-            text-transform: uppercase;
-        }
-        #output-container {
-            flex-grow: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding-bottom: 10px;
-        }
-        /* Scrollbar hiding for terminal purity */
-        #output-container::-webkit-scrollbar { width: 0px; }
-        .log-line {
-            margin: 2px 0;
-            line-height: 1.2;
-            font-size: 0.85rem;
-            word-wrap: break-word;
-        }
-        .diag-alert {
-            color: #ff3333;
-            text-shadow: 0 0 3px rgba(255, 51, 51, 0.6);
-        }
-        #input-row {
-            display: flex;
-            align-items: center;
-            border-top: 1px solid #ffb000;
-            padding-top: 10px;
-        }
-        #prompt {
-            margin-right: 10px;
-            font-weight: bold;
-        }
-        input {
-            flex-grow: 1;
-            background: transparent;
-            border: none;
-            color: #ffb000;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 1rem;
-            outline: none;
-            text-shadow: 0 0 3px rgba(255, 176, 0, 0.4);
-        }
-        #command-ref {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 10px;
-            font-size: 0.75rem;
-            opacity: 0.6;
-            cursor: default;
-        }
-        .cmd {
+        
+        #game-container {
             position: relative;
-            padding: 2px 5px;
-            border: 1px dashed transparent;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-        .cmd:hover {
-            border-color: #ffb000;
-            opacity: 1;
-            background: rgba(255, 176, 0, 0.1);
+        
+        canvas { 
+            border: 3px solid #4a9eff;
+            box-shadow: 0 0 20px rgba(74, 158, 255, 0.3);
+            background: linear-gradient(to bottom, #1e1a1f 0%, #3d2b22 100%);
         }
-        .tooltip {
-            visibility: hidden;
-            width: 200px;
-            background-color: #ffb000;
-            color: #020202;
-            text-align: left;
-            padding: 5px;
+        
+        #ui-layer {
             position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -100px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            box-shadow: 0 0 5px rgba(255,176,0,0.8);
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
         }
-        .cmd:hover .tooltip {
-            visibility: visible;
+        
+        .panel {
+            background: rgba(15, 23, 42, 0.9);
+            border: 2px solid #4a9eff;
+            padding: 15px;
+            border-radius: 8px;
+            pointer-events: auto;
+        }
+        
+        h3 { 
+            color: #4a9eff; 
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+        
+        button {
+            background: #2d5a87;
+            border: none;
+            padding: 8px 16px;
+            color: white;
+            cursor: pointer;
+            margin: 3px;
+            font-family: inherit;
+            border-radius: 4px;
+        }
+        
+        button:hover { background: #3d7ab0; }
+        
+        .status { 
+            margin-top: 10px;
+            padding: 5px 0;
+            color: #8a8aff;
+        }
+        
+        #message-area {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.95);
+            border: 2px solid #8a8aff;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+        
+        .unit-count { 
+            color: #4eff8a; 
+            font-size: 18px; 
         }
     </style>
 </head>
 <body>
-
-    <div id="hud">
-        <div class="hud-stat"><span class="hud-label">Enterprise Value (EV)</span><span id="ev-val">$245.5M</span></div>
-        <div class="hud-stat"><span class="hud-label">Operating Margin</span><span id="margin-val">68.2%</span></div>
-        <div class="hud-stat"><span class="hud-label">CapEx (Outbound)</span><span id="calls-val">12</span></div>
-        <div class="hud-stat"><span class="hud-label">Toxic Debt (CE)</span><span id="ce-val">8 Hrs</span></div>
-        <div class="hud-stat"><span class="hud-label">R&D (Strat Reviews)</span><span id="strat-val">0</span></div>
-        <div class="hud-stat"><span class="hud-label">Status</span><span id="status-val">HOLD</span></div>
-    </div>
-
-    <div id="output-container">
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="ui-layer">
+        <div class="panel">
+            <h3>Battlefield Command</h3>
+            <button onclick="startGame()">NEW MISSION</button>
+            <button onclick="resetMission()">RESET</button><br>
+            <div style="margin-top:10px;">
+                <span class="unit-count">Your Units: </span><span id="playerUnits">0</span> | 
+                <span style="color:#ff6b6b">Enemy: </span><span id="enemyUnits">0</span>
+            </div>
         </div>
-
-    <div id="input-row">
-        <span id="prompt">&gt;</span>
-        <input type="text" id="cmd-input" autocomplete="off" autofocus spellcheck="false">
-    </div>
-
-    <div id="command-ref">
-        <div class="cmd">CALL [n]
-            <span class="tooltip">Log outbound dividend touches. Increases baseline multiple. Ex: CALL 5</span>
-        </div>
-        <div class="cmd">STRAT
-            <span class="tooltip">Log 1 completed Strategic Review. Clears CapEx deficits.</span>
-        </div>
-        <div class="cmd">CE [h]
-            <span class="tooltip">Service toxic debt. Reduces cognitive drag penalty. Ex: CE 1</span>
-        </div>
-        <div class="cmd">ACQ-O [val]
-            <span class="tooltip">Log organic assets from existing clients in millions. Ex: ACQ-O 1.5</span>
-        </div>
-        <div class="cmd">ACQ-E [val]
-            <span class="tooltip">Log external assets from new clients in millions. Ex: ACQ-E 2.0</span>
-        </div>
-        <div class="cmd">NOTE [txt]
-            <span class="tooltip">Log qualitative Forward Guidance for algorithmic sentiment analysis.</span>
-        </div>
-        <div class="cmd">DIAG
-            <span class="tooltip">Run deep system diagnostic and opportunity cost output.</span>
-        </div>
-    </div>
-
-    <script>
-        const outputContainer = document.getElementById('output-container');
-        const cmdInput = document.getElementById('cmd-input');
         
-        let stats = { ev: 245.5, calls: 12, ce: 8, strat: 0 };
+        <div class="panel" style="text-align:right;">
+            <h3>Mission Status</h3>
+            <p style="font-size:12px; margin-top:5px;" id="missionStatus">Set up your forces...</p>
+        </div>
+    </div>
+    
+    <div id="message-area"></div>
+</div>
 
-        const bootSequence = [
-            "INITIATING SECURE CONNECTION...",
-            "AUTHENTICATING OPERATOR IDENTITY...",
-            "BYPASSING STANDARD CRM PROTOCOLS...",
-            "ESTABLISHING FORENSIC HUD...",
-            "WARNING: 8 HOURS TOXIC DEBT (CE) DETECTED.",
-            "WARNING: CAPEX DEFICIT DETECTED. NO STRATEGIC REVIEWS LOGGED IN 14 DAYS.",
-            "STATUS DOWNGRADED TO: HOLD.",
-            "AWAITING INPUT."
-        ];
+<script>
+// ============================================
+// GAME ENGINE - ISOMETRIC RENDERING
+// ============================================
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-        let bootIndex = 0;
+canvas.width = 1000;
+canvas.height = 700;
+
+const TILE_SIZE = 40;
+const GRID_WIDTH = 15;
+const GRID_HEIGHT = 12;
+const ORIGIN_X = canvas.width / 2 - (GRID_WIDTH * TILE_SIZE) / 2;
+const ORIGIN_Y = 80;
+
+// Game state
+let gameState = 'setup'; // setup, playing, gameover
+let grid = [];
+let units = [];
+let playerUnits = [];
+let enemyUnits = [];
+let selectedUnit = null;
+let messageTimer = null;
+let animationId = null;
+let particles = [];
+
+// Unit types with stats
+const UNIT_TYPES = {
+    infantry: { name: 'Infantry', hp: 30, damage: 8, range: 2, speed: 1.5, color: '#4eff8a' },
+    sniper:   { name: 'Sniper',    hp: 25, damage: 15, range: 4, speed: 1.2, color: '#4affea' },
+    heavy:    { name: 'Heavy',     hp: 50, damage: 12, range: 3, speed: 1.0, color: '#8aff6a' }
+};
+
+// ============================================
+// ISOMETRIC MATH
+// ============================================
+function toIso(x, y) {
+    return {
+        x: ORIGIN_X + (x - y) * TILE_SIZE / 2,
+        y: ORIGIN_Y + (x + y) * TILE_SIZE / 4
+    };
+}
+
+function fromIso(px, py) {
+    const isoY = (px - ORIGIN_X) / (TILE_SIZE / 2);
+    const isoX = (py - ORIGIN_Y) / (TILE_SIZE / 4) - isoY;
+    return {
+        x: Math.floor(isoX / 2),
+        y: Math.floor(-isoY / 2 + isoX / 2)
+    };
+}
+
+function drawTile(x, y, color = '#5d4e37') {
+    const pos = toIso(x, y);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y - TILE_SIZE/4);
+    ctx.lineTo(pos.x + TILE_SIZE/2, pos.y);
+    ctx.lineTo(pos.x, pos.y + TILE_SIZE/4);
+    ctx.lineTo(pos.x - TILE_SIZE/2, pos.y);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = '#3d342a';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+}
+
+function drawUnit(unit) {
+    const pos = toIso(unit.x, unit.y);
+    
+    // Shadow/base
+    ctx.beginPath();
+    ctx.ellipse(pos.x, pos.y + TILE_SIZE/8, 8, 4, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fill();
+    
+    // Unit body (simple box with height to look 3D-ish)
+    const baseY = pos.y - TILE_SIZE/4;
+    const unitHeight = TILE_SIZE / 2;
+    
+    // Side faces (pseudo-3D effect)
+    ctx.fillStyle = adjustColor(unit.color, -30);
+    ctx.fillRect(pos.x - 6, baseY, 12, unitHeight);
+    
+    ctx.fillStyle = adjustColor(unit.color, -15);
+    ctx.fillRect(pos.x + 4, baseY - 4, 8, unitHeight);
+    
+    // Top face
+    ctx.beginPath();
+    ctx.moveTo(pos.x - 6, baseY);
+    ctx.lineTo(pos.x + 4, baseY);
+    ctx.lineTo(pos.x + 2, baseY - 10);
+    ctx.lineTo(pos.x - 8, baseY - 10);
+    ctx.closePath();
+    ctx.fillStyle = unit.color;
+    ctx.fill();
+    
+    // Outline
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    
+    // Health bar (if damaged)
+    if (unit.currentHp < unit.maxHp) {
+        const barWidth = 20;
+        const barHeight = 3;
+        ctx.fillStyle = '#555';
+        ctx.fillRect(pos.x - barWidth/2, baseY - 18, barWidth, barHeight);
+        ctx.fillStyle = '#4eff4a';
+        ctx.fillRect(pos.x - barWidth/2, baseY - 18, 
+                    barWidth * (unit.currentHp / unit.maxHp), barHeight);
+    }
+    
+    // Selection indicator
+    if (selectedUnit === unit) {
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y + TILE_SIZE/4, 12, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ffffaa';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+}
+
+function adjustColor(color, amount) {
+    const hex = color.replace('#', '');
+    const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount));
+    const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount));
+    const b = Math.max(0, Math.min(255, parseInt(hex.substr(4, 2), 16) + amount));
+    return `rgb(${r},${g},${b})`;
+}
+
+// ============================================
+// GAME LOGIC
+// ============================================
+function initGrid() {
+    grid = [];
+    for (let x = 0; x < GRID_WIDTH; x++) {
+        grid[x] = [];
+        for (let y = 0; y < GRID_HEIGHT; y++) {
+            grid[x][y] = { 
+                terrain: 'plain',
+                units: [],
+                explored: false,
+                pathCost: 1
+            };
+        }
+    }
+}
+
+function createUnit(type, x, y, team) {
+    const stats = UNIT_TYPES[type];
+    return {
+        id: Date.now() + Math.random(),
+        type: type,
+        x: x,
+        y: y,
+        maxHp: stats.hp,
+        currentHp: stats.hp,
+        damage: stats.damage,
+        range: stats.range,
+        speed: stats.speed,
+        team: team, // 'player' or 'enemy'
+        color: stats.color,
+        targetX: null,
+        targetY: null,
+        attackTarget: null,
+        moving: false,
+        attacking: false,
+        lastAttackTime: 0
+    };
+}
+
+function startGame() {
+    initGrid();
+    units = [];
+    particles = [];
+    
+    // Place player units (bottom half)
+    for (let i = 0; i < 5; i++) {
+        const type = Object.keys(UNIT_TYPES)[i % 3];
+        const unit = createUnit(type, 
+            Math.floor(Math.random() * GRID_WIDTH), 
+            GRID_HEIGHT - 2 - Math.floor(i / 2), 'player');
+        units.push(unit);
+        playerUnits.push(unit);
+        grid[unit.x][unit.y].units.push(unit.id);
+    }
+    
+    // Place enemy units (top half) - hidden initially
+    for (let i = 0; i < 5; i++) {
+        const type = Object.keys(UNIT_TYPES)[i % 3];
+        const unit = createUnit(type, 
+            Math.floor(Math.random() * GRID_WIDTH), 
+            2 + Math.floor(i / 2), 'enemy');
+        units.push(unit);
+        enemyUnits.push(unit);
+        grid[unit.x][unit.y].units.push(unit.id);
+    }
+    
+    gameState = 'setup';
+    selectedUnit = null;
+    updateUI();
+    showMessage("PLACE YOUR UNITS ON THE GRID (Click to place)");
+}
+
+function resetMission() {
+    clearInterval(messageTimer);
+    startGame();
+}
+
+// ============================================
+// INPUT HANDLING
+// ============================================
+canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+    
+    if (gameState === 'setup') {
+        const tile = fromIso(px, py);
         
-        function printLine(text, isAlert = false) {
-            const line = document.createElement('div');
-            line.className = 'log-line' + (isAlert ? ' diag-alert' : '');
-            line.innerText = text;
-            outputContainer.appendChild(line);
-            outputContainer.scrollTop = outputContainer.scrollHeight;
+        // Check bounds
+        if (tile.x < 0 || tile.x >= GRID_WIDTH || 
+            tile.y < 0 || tile.y >= GRID_HEIGHT) return;
+        
+        // Can only place in player territory (bottom half)
+        if (tile.y < GRID_HEIGHT / 2) {
+            showMessage("Can only place units on your side!");
+            return;
         }
-
-        function runBoot() {
-            if (bootIndex < bootSequence.length) {
-                printLine("> " + bootSequence[bootIndex], bootSequence[bootIndex].includes("WARNING"));
-                bootIndex++;
-                setTimeout(runBoot, 300);
-            }
+        
+        // Check if space is clear
+        const unitAtTile = units.find(u => u.x === tile.x && u.y === tile.y);
+        if (unitAtTile || grid[tile.x][tile.y].units.length > 0) {
+            showMessage("Space occupied!");
+            return;
         }
-
-        window.onload = runBoot;
-
-        // Keep focus on input
-        document.body.addEventListener('click', () => cmdInput.focus());
-
-        cmdInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                const rawCmd = this.value.trim();
-                if (!rawCmd) return;
+        
+        // Place new player unit
+        const type = Object.keys(UNIT_TYPES)[Math.floor(Math.random() * 3)];
+        const unit = createUnit(type, tile.x, tile.y, 'player');
+        units.push(unit);
+        playerUnits.push(unit);
+        grid[tile.x][tile.y].units.push(unit.id);
+        
+        // Check if ready to start
+        const remainingSlots = (GRID_WIDTH / 2) * 3; // Approximate slots in player territory
+        const totalUnits = units.filter(u => u.team === 'player').length;
+        
+        if (totalUnits >= 5 && selectedUnit == null) {
+            gameState = 'playing';
+            showMessage("MISSION START! Left-click to attack enemies");
+            updateUI();
+            
+            // Start enemy AI loop
+            setInterval(enemyAI, 2000);
+        } else {
+            updateUI();
+        }
+    } else if (gameState === 'playing') {
+        const tile = fromIso(px, py);
+        
+        if (tile.x < 0 || tile.x >= GRID_WIDTH || 
+            tile.y < 0 || tile.y >= GRID_HEIGHT) return;
+        
+        // Check if clicked on a unit
+        const clickedUnit = units.find(u => u.x === tile.x && u.y === tile.y);
+        
+        if (clickedUnit && clickedUnit.team === 'player') {
+            selectedUnit = clickedUnit;
+        } else if (!clickedUnit) {
+            // Move order
+            if (selectedUnit) {
+                selectedUnit.targetX = tile.x;
+                selectedUnit.targetY = tile.y;
+                selectedUnit.moving = true;
                 
-                printLine("> " + rawCmd);
-                this.value = '';
-                processCommand(rawCmd.toUpperCase());
-            }
-        });
-
-        function updateHUD() {
-            document.getElementById('ev-val').innerText = `$${stats.ev.toFixed(1)}M`;
-            document.getElementById('calls-val').innerText = stats.calls;
-            document.getElementById('ce-val').innerText = `${stats.ce} Hrs`;
-            document.getElementById('strat-val').innerText = stats.strat;
-        }
-
-        function processCommand(cmd) {
-            const parts = cmd.split(' ');
-            const base = parts[0];
-            const arg = parts.slice(1).join(' ');
-
-            setTimeout(() => {
-                switch(base) {
-                    case 'CALL':
-                        const num = parseInt(arg) || 1;
-                        stats.calls += num;
-                        printLine(`EXECUTION LOGGED: ${num} OUTBOUND TOUCHPOINTS. BASE MULTIPLE STABILIZED.`);
-                        break;
-                    case 'STRAT':
-                        stats.strat += 1;
-                        printLine(`R&D LOGGED: 1 STRATEGIC REVIEW EXECUTED. STATUS UPGRADED TO BUY.`);
-                        document.getElementById('status-val').innerText = "BUY";
-                        break;
-                    case 'CE':
-                        const ceNum = parseInt(arg) || 1;
-                        stats.ce = Math.max(0, stats.ce - ceNum);
-                        printLine(`DEBT SERVICED: ${ceNum} HOURS CLEARED. COGNITIVE DRAG REDUCED.`);
-                        break;
-                    case 'ACQ-O':
-                        const valO = parseFloat(arg) || 0;
-                        stats.ev += valO * 1.5; // Premium multiple for organic
-                        printLine(`ORGANIC M&A LOGGED: $${valO}M ADDED. MAXIMAL ENTERPRISE VALUE EXPANSION CAPTURED.`);
-                        break;
-                    case 'NOTE':
-                        printLine(`FORWARD GUIDANCE RECEIVED. RUNNING SENTIMENT ANALYSIS... LOGGED.`);
-                        break;
-                    case 'DIAG':
-                        printLine(`SYSDIAG RUNNING...`, true);
-                        printLine(`STATUS: MARGIN COMPRESSION IMMINENT.`, true);
-                        printLine(`ANALYSIS: You are carrying 8 hours of CE Debt. Inbound reactivity is high. Historical data indicates a 22% drop in M&A velocity when proactive R&D ceases.`, true);
-                        printLine(`DIRECTIVE: Execute 1 STRAT command or clear 2 hours of CE today to halt multiple contraction.`, true);
-                        break;
-                    case 'CLEAR':
-                        outputContainer.innerHTML = '';
-                        break;
-                    default:
-                        printLine(`UNRECOGNIZED SYNTAX. REFERENCE COMMAND BAR.`);
+                // Create movement particles
+                for (let i = 0; i < 3; i++) {
+                    createParticle(selectedUnit.x, selectedUnit.y);
                 }
-                updateHUD();
-            }, 400); // Slight delay for terminal feel
+            }
         }
-    </script>
+    }
+});
+
+canvas.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    
+    if (gameState !== 'playing' || !selectedUnit) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+    const tile = fromIso(px, py);
+    
+    if (tile.x >= 0 && tile.x < GRID_WIDTH && 
+        tile.y >= 0 && tile.y < GRID_HEIGHT) {
+        
+        // Check for enemy in range
+        let attackTarget = null;
+        for (const unit of units) {
+            if (unit.team !== selectedUnit.team) {
+                const dist = Math.abs(unit.x - tile.x) + Math.abs(unit.y - tile.y);
+                if (dist <= selectedUnit.range) {
+                    attackTarget = unit;
+                    break;
+                }
+            }
+        }
+        
+        if (attackTarget) {
+            selectedUnit.attackTarget = attackTarget;
+            showMessage(`Attacking! ${selectedUnit.type} engages enemy at (${tile.x},${tile.y})`);
+        } else {
+            // Just move order for now
+            selectedUnit.targetX = tile.x;
+            selectedUnit.targetY = tile.y;
+            selectedUnit.moving = true;
+        }
+    }
+});
+
+// ============================================
+// AI & GAME LOOP
+// ============================================
+function enemyAI() {
+    if (gameState !== 'playing') return;
+    
+    const livingEnemies = enemyUnits.filter(u => u.currentHp > 0);
+    
+    for (const enemy of livingEnemies) {
+        // Find nearest player unit
+        let nearestPlayer = null;
+        let minDist = Infinity;
+        
+        const playerAlive = playerUnits.filter(u => u.currentHp > 0);
+        if (playerAlive.length === 0) return;
+        
+        for (const player of playerAlive) {
+            const dist = Math.abs(enemy.x - player.x) + Math.abs(enemy.y - player.y);
+            if (dist < minDist) {
+                minDist = dist;
+                nearestPlayer = player;
+            }
+        }
+        
+        if (nearestPlayer && !enemy.moving) {
+            // Move toward player
+            enemy.targetX = nearestPlayer.x + Math.sign(nearestPlayer.x - enemy.x);
+            enemy.targetY = nearestPlayer.y;
+            enemy.moving = true;
+            
+            // Occasionally attack if in range
+            const distToPlayer = Math.abs(enemy.x - nearestPlayer.x) + Math.abs(enemy.y - nearestPlayer.y);
+            if (distToPlayer <= enemy.range) {
+                enemy.attackTarget = nearestPlayer;
+            }
+        }
+    }
+}
+
+function updateUnits() {
+    for (const unit of units) {
+        if (unit.currentHp <= 0) continue;
+        
+        // Attack target
+        if (unit.attackTarget && unit.attackTarget.currentHp > 0) {
+            const dist = Math.abs(unit.x - unit.attackTarget.x) + 
+                        Math.abs(unit.y - unit.attackTarget.y);
+            
+            if (dist <= unit.range) {
+                const now = Date.now();
+                if (now - unit.lastAttackTime > 1500) {
+                    // Deal damage
+                    unit.attackTarget.currentHp -= unit.damage;
+                    
+                    // Visual feedback
+                    createParticle(unit.attackTarget.x, unit.attackTarget.y, 'damage');
+                    unit.lastAttackTime = now;
+                    
+                    if (unit.attackTarget.currentHp <= 0) {
+                        handleDeath(unit.attackTarget);
+                    }
+                }
+            } else {
+                // Move toward target
+                const dx = Math.sign(unit.attackTarget.x - unit.x);
+                const dy = Math.sign(unit.attackTarget.y - unit.y);
+                unit.targetX = unit.x + dx;
+                unit.targetY = unit.targetY || unit.y + dy;
+            }
+        }
+        
+        // Movement
+        if (unit.moving && unit.targetX !== null && 
+            unit.targetY !== null) {
+            
+            const distToTarget = Math.abs(unit.targetX - unit.x) + 
+                                Math.abs(unit.targetY - unit.y);
+            
+            if (distToTarget > 0) {
+                // Simple pathfinding: move one step per update
+                unit.moving = false;
+                
+                if (unit.x < unit.targetX) unit.x++;
+                else if (unit.x > unit.targetX) unit.x--;
+                else if (unit.y < unit.targetY) unit.y++;
+                else if (unit.y > unit.targetY) unit.y--;
+            } else {
+                unit.moving = false;
+                unit.targetX = null;
+                unit.targetY = null;
+                
+                // Check for new targets when arrived
+                if (unit.team === 'player' && selectedUnit !== unit) continue;
+                
+                const nearbyEnemies = units.filter(u => 
+                    u.team !== unit.team && 
+                    Math.abs(unit.x - u.x) + Math.abs(unit.y - u.y) <= 2
+                );
+                
+                if (nearbyEnemies.length > 0) {
+                    unit.attackTarget = nearbyEnemies[0];
+                } else {
+                    // Find nearest enemy
+                    let nearest = null;
+                    let minDist = Infinity;
+                    for (const u of units) {
+                        if (u.team !== unit.team && u.currentHp > 0) {
+                            const d = Math.abs(unit.x - u.x) + Math.abs(unit.y - u.y);
+                            if (d < minDist) {
+                                minDist = d;
+                                nearest = u;
+                            }
+                        }
+                    }
+                    unit.attackTarget = nearest;
+                }
+            }
+        } else {
+            // Stationary, check for nearby enemies
+            const nearbyEnemies = units.filter(u => 
+                u.team !== unit.team && 
+                Math.abs(unit.x - u.x) + Math.abs(unit.y - u.y) <= 2
+            );
+            
+            if (nearbyEnemies.length > 0 && !unit.attackTarget) {
+                unit.attackTarget = nearbyEnemies[0];
+            }
+        }
+    }
+}
+
+function handleDeath(unit) {
+    // Remove from grid
+    const tile = grid[unit.x][unit.y];
+    tile.units = tile.units.filter(id => id !== unit.id);
+    
+    // Remove from team arrays
+    if (unit.team === 'player') {
+        playerUnits = playerUnits.filter(u => u !== unit);
+    } else {
+        enemyUnits = enemyUnits.filter(u => u !== unit);
+    }
+    
+    createParticle(unit.x, unit.y, 'death');
+    
+    // Check win/loss
+    if (playerUnits.every(u => u.currentHp <= 0)) {
+        gameOver(false);
+    } else if (enemyUnits.every(u => u.currentHp <= 0)) {
+        gameOver(true);
+    }
+    
+    updateUI();
+}
+
+function gameOver(playerWon) {
+    gameState = 'gameover';
+    clearInterval(messageTimer);
+    
+    const msg = playerWon 
+        ? "VICTORY! Mission Accomplished!" 
+        : "DEFEAT! Your forces were overrun...";
+    
+    showMessage(msg, 5000);
+}
+
+// ============================================
+// PARTICLE SYSTEM (for visual effects)
+// ============================================
+function createParticle(x, y, type = 'move') {
+    particles.push({
+        x: x,
+        y: y,
+        life: 1.0,
+        type: type
+    });
+}
+
+function updateAndDrawParticles() {
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        
+        if (p.type === 'move') {
+            ctx.beginPath();
+            ctx.arc(toIso(p.x, p.y).x, toIso(p.y, p.y).y, 6 * p.life, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(78, 255, 138, ${p.life * 0.5})`;
+            ctx.fill();
+        } else if (p.type === 'damage') {
+            ctx.beginPath();
+            const pos = toIso(p.x, p.y);
+            ctx.arc(pos.x, pos.y - TILE_SIZE/4, 10 * (1 - p.life), 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 78, 78, ${p.life})`;
+            ctx.fill();
+        } else if (p.type === 'death') {
+            ctx.beginPath();
+            const pos = toIso(p.x, p.y);
+            ctx.arc(pos.x, pos.y - TILE_SIZE/4, 15 * p.life, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 78, 255, ${p.life})`;
+            ctx.fill();
+        }
+        
+        p.life -= 0.03;
+        if (p.life <= 0) particles.splice(i, 1);
+    }
+}
+
+// ============================================
+// RENDERING LOOP
+// ============================================
+function render() {
+    // Clear canvas with Mars-like background
+    ctx.fillStyle = '#2a2a3e';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw grid (back to front for proper depth)
+    const drawOrder = [];
+    for (let x = 0; x < GRID_WIDTH; x++) {
+        for (let y = 0; y < GRID_HEIGHT; y++) {
+            drawOrder.push({x, y});
+        }
+    }
+    
+    // Sort by depth (y + x) for isometric correct drawing order
+    drawOrder.sort((a, b) => (a.x + a.y) - (b.x + b.y));
+    
+    for (const tile of drawOrder) {
+        const terrainColor = tile.y < GRID_HEIGHT / 2 
+            ? '#3d4e5d' // Enemy territory (blue tint)
+            : '#5d4e37'; // Player territory (brown/red)
+        
+        drawTile(tile.x, tile.y, terrainColor);
+    }
+    
+    // Draw units (sorted for depth)
+    const unitSort = [...units].sort((a, b) => (a.x + a.y) - (b.x + b.y));
+    
+    for (const unit of unitSort) {
+        if (unit.currentHp > 0) {
+            drawUnit(unit);
+        }
+    }
+    
+    // Draw particles
+    updateAndDrawParticles();
+}
+
+function gameLoop() {
+    render();
+    if (gameState === 'playing') {
+        updateUnits();
+    }
+    animationId = requestAnimationFrame(gameLoop);
+}
+
+// ============================================
+// UI FUNCTIONS
+// ============================================
+function showMessage(text, duration = 3000) {
+    const msgArea = document.getElementById('message-area');
+    msgArea.textContent = text;
+    msgArea.style.display = 'block';
+    
+    clearInterval(messageTimer);
+    messageTimer = setTimeout(() => {
+        if (msgArea.textContent === text) {
+            msgArea.style.display = 'none';
+        }
+    }, duration);
+}
+
+function updateUI() {
+    const playerCount = playerUnits.filter(u => u.currentHp > 0).length;
+    const enemyCount = enemyUnits.filter(u => u.currentHp > 0).length;
+    
+    document.getElementById('playerUnits').textContent = `${playerCount}/${units.filter(u => u.team === 'player' && UNIT_TYPES[u.type]).length}`;
+    document.getElementById('enemyUnits').textContent = `${enemyCount}/${5}`;
+    
+    const statusEl = document.getElementById('missionStatus');
+    if (gameState === 'setup') {
+        statusEl.textContent = "Place 5+ units to start mission";
+    } else if (gameState === 'playing') {
+        statusEl.textContent = `${playerCount} vs ${enemyCount} - Fight!`;
+    } else if (gameState === 'gameover') {
+        const playerAlive = playerUnits.filter(u => u.currentHp > 0).length;
+        statusEl.textContent = playerAlive > 0 ? `Mission incomplete... ${playerAlive} survivors` : "Mission failed";
+    }
+}
+
+// ============================================
+// INITIALIZATION
+// ============================================
+function init() {
+    startGame();
+    gameLoop();
+    
+    showMessage("v0.5 - ISOMETRIC BATTLEFIELD", 4000);
+}
+
+init();
+</script>
 </body>
 </html>
