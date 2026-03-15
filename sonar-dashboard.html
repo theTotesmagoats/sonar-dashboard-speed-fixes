@@ -3,43 +3,79 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AdvisorFlow - Call Tracker</title>
+  <title>AdvisorFlow - 80s Broker Dashboard</title>
+  
+  <!-- VT323 Google Font for authentic terminal feel -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+
   <style>
+    /* === CRT AUTHENTICITY & COLOR PALETTE === */
     :root {
-      --led-orange: #ff6b35;
-      --led-red: #d94f4f;
-      --led-bg: #1a1a2e;
-      --panel-bg: #0f0f1a;
-      --text-primary: #ffffff;
-      --text-secondary: #a0a0b0;
-      --accent-blue: #4fc3f7;
-      --accent-green: #66bb6a;
-      --accent-yellow: #ffa726;
-      --border-color: #2d2d44;
+      --amber-primary: #ffb000;
+      --amber-glow: rgba(255, 176, 0, 0.4);
+      --amber-dim: #cc8c00;
+      --bg-black: #0a0a03;
+      --bg-dark: #111105;
+      --scan-line: rgba(255, 176, 0, 0.04);
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      background: linear-gradient(135deg, #0a0a12 0%, #1a1a2e 100%);
-      color: var(--text-primary);
+      background: var(--bg-black);
+      color: var(--amber-primary);
+      font-family: 'VT323', monospace, 'Courier New', monospace;
+      font-size: 18px;
       min-height: 100vh;
-      padding-bottom: 60px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* === PHOSPHOR GLOW TEXT EFFECT === */
+    .glow { text-shadow: 0 0 5px var(--amber-glow), 0 0 10px var(--amber-glow); }
+
+    /* === CRT SCAN LINES OVERLAY === */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 2px,
+        var(--scan-line) 3px,
+        transparent 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* === SCREEN CURVATURE VIGNETTE === */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.6) 95%);
+      pointer-events: none;
+      z-index: 9998;
     }
 
     /* === SCROLLING TICKER BAR === */
     .ticker-bar {
-      background: #0d0d14;
-      border-bottom: 2px solid var(--led-orange);
+      background: var(--bg-dark);
+      border-bottom: 2px solid var(--amber-primary);
       overflow: hidden;
       white-space: nowrap;
-      padding: 10px 0;
+      padding: 8px 0;
       position: relative;
+      z-index: 100;
     }
 
     .ticker-track {
       display: inline-block;
-      animation: scroll-left 30s linear infinite;
+      animation: scroll-left 25s linear infinite;
     }
 
     @keyframes scroll-left {
@@ -50,291 +86,405 @@
     .ticker-item {
       display: inline-flex;
       align-items: center;
-      gap: 15px;
-      padding: 0 25px;
-      font-size: 14px;
-    }
-
-    .ticker-label { color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; font-size: 11px; }
-    .ticker-value { font-weight: bold; color: var(--accent-green); }
-    .ticker-value.negative { color: var(--led-red); }
-    .ticker-trend { font-size: 12px; }
-
-    /* === MAIN LAYOUT === */
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-      display: grid;
       gap: 20px;
+      padding: 0 30px;
+      font-size: 20px;
     }
 
-    /* === TIMER SECTION === */
-    .timer-section {
-      background: var(--panel-bg);
-      border-radius: 16px;
-      padding: 30px;
-      text-align: center;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    }
-
-    .timer-display {
-      font-family: 'Courier New', monospace;
-      font-size: 120px;
-      color: var(--led-orange);
-      text-shadow: 0 0 20px rgba(255, 107, 53, 0.6), 0 0 40px rgba(255, 107, 53, 0.3);
-      margin-bottom: 20px;
-      letter-spacing: 8px;
-    }
-
-    .timer-controls {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-
-    .btn {
-      padding: 14px 32px;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      border: none;
-    }
-
-    .btn-primary { background: var(--led-orange); color: #fff; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4); }
-    .btn-secondary { background: var(--border-color); color: var(--text-primary); }
-    .btn-danger { background: var(--led-red); color: #fff; }
-
-    .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
-    .btn:active:not(:disabled) { transform: translateY(0); }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    /* === CATEGORY SELECTOR === */
-    .category-selector {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-
-    .cat-btn {
-      padding: 8px 20px;
-      border-radius: 6px;
-      background: var(--border-color);
-      color: var(--text-primary);
-      cursor: pointer;
-      font-size: 14px;
-      transition: all 0.2s ease;
-    }
-
-    .cat-btn.active { background: var(--accent-blue); color: #fff; }
-    .cat-btn:hover { transform: scale(1.05); }
-
-    /* === ANXIETY RATING === */
-    .anxiety-section {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-
-    .anxiety-label { color: var(--text-secondary); font-size: 14px; }
-
-    .rating-buttons { display: flex; gap: 8px; }
-
-    .rating-btn {
-      width: 45px; height: 45px;
-      border-radius: 8px;
-      background: var(--border-color);
-      color: var(--text-primary);
-      font-size: 18px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .rating-btn:hover { transform: scale(1.1); }
-    .rating-btn.selected { background: var(--led-orange); color: #fff; box-shadow: 0 0 15px rgba(255, 107, 53, 0.6); }
-
-    /* === INSIGHTS PANEL === */
-    .insights-panel {
-      background: linear-gradient(135deg, #1a1a3e 0%, #2d2d4f 100%);
-      border-radius: 16px;
-      padding: 25px;
-    }
-
-    .insights-title {
-      font-size: 18px; color: var(--accent-yellow); margin-bottom: 15px;
-      display: flex; align-items: center; gap: 10px;
-    }
-
-    .insight-content { line-height: 1.7; font-size: 15px; color: var(--text-primary); }
-
-    .insight-highlight { background: rgba(255, 167, 38, 0.15); padding: 3px 8px; border-radius: 4px; font-weight: bold; color: var(--accent-yellow); }
-
-    /* === DAILY LOG === */
-    .daily-log {
-      background: var(--panel-bg);
-      border-radius: 16px;
-      padding: 25px;
-    }
-
-    .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-
-    .log-title { font-size: 18px; color: var(--accent-blue); }
-
-    /* === CALL ENTRY (EDITABLE) === */
-    .call-entry {
-      background: rgba(255, 255, 255, 0.03);
-      border-radius: 10px;
-      padding: 18px;
-      margin-bottom: 12px;
-      border-left: 4px solid var(--accent-blue);
-    }
-
-    .call-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
-    .call-time { font-size: 13px; color: var(--text-secondary); }
-    .call-meta { display: flex; gap: 15px; font-size: 12px; margin-bottom: 8px; }
-    .call-note { font-style: italic; color: var(--text-secondary); margin-top: 8px; font-size: 13px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); }
-
-    /* Editable Metrics Section */
-    .metrics-edit {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 12px;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px dashed var(--border-color);
-    }
-
-    .metric-field { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .metric-label { color: var(--text-secondary); font-size: 12px; width: 100px; }
-    .metric-input {
-      padding: 6px 10px;
-      border-radius: 5px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--border-color);
-      color: var(--text-primary);
-      font-size: 13px;
-      width: 100%;
-    }
-
-    .metric-input:focus { outline: none; border-color: var(--accent-blue); }
+    .ticker-label { color: var(--amber-dim); text-transform: uppercase; letter-spacing: 2px; }
+    .ticker-value { font-weight: bold; }
+    .ticker-value.negative { color: #ff4444; text-shadow: 0 0 5px rgba(255,68,68,0.4); }
     
-    .saved-badge {
-      display: inline-block;
-      padding: 2px 8px;
-      background: rgba(102, 187, 106, 0.2);
-      color: var(--accent-green);
-      border-radius: 4px;
-      font-size: 10px;
+    /* === MAIN DASHBOARD CONTAINER === */
+    .dashboard {
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 20px;
+      position: relative;
+      z-index: 50;
     }
 
-    /* === ADD CATEGORY FORM === */
-    .add-category-form { display: flex; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color); flex-wrap: wrap; align-items: center; }
-
-    .form-input {
-      padding: 10px 15px;
-      border-radius: 6px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--border-color);
-      color: var(--text-primary);
-      font-size: 14px;
+    /* === CRT MONITOR BORDER EFFECT === */
+    .dashboard::before {
+      content: '';
+      position: absolute;
+      top: -15px; left: -15px; right: -15px; bottom: -15px;
+      border: 3px solid var(--amber-dim);
+      border-radius: 20px;
+      pointer-events: none;
     }
 
-    .form-input:focus { outline: none; border-color: var(--accent-blue); }
-
-    /* === WEEKLY SUMMARY === */
-    .weekly-data {
+    /* === DASHBOARD PANELS === */
+    .panels {
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 10px;
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border-color);
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-bottom: 25px;
     }
 
-    .day-card {
+    @media (max-width: 768px) {
+      .panels { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .panel {
+      background: var(--bg-dark);
+      border: 2px solid var(--amber-dim);
+      padding: 15px;
       text-align: center;
-      padding: 15px 8px;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 8px;
       position: relative;
     }
 
-    .day-name { font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; }
-    .day-value { font-size: 24px; font-weight: bold; color: var(--accent-green); }
-    .day-best { position: absolute; top: -8px; right: 10px; background: var(--led-orange); border-radius: 6px; padding: 2px 6px; font-size: 9px; }
-
-    /* === MANUAL ENTRY FORM === */
-    .manual-entry-form {
-      display: none; margin-top: 15px; padding: 20px; background: rgba(255, 255, 255, 0.03); border-radius: 10px;
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: -3px; left: -3px; right: -3px; bottom: -3px;
+      border: 1px solid rgba(255, 176, 0, 0.2);
+      pointer-events: none;
     }
 
-    .manual-entry-form.show { display: block; }
-
-    .form-row { margin-bottom: 12px; }
-    .form-row label { display: block; color: var(--text-secondary); font-size: 13px; margin-bottom: 5px; }
-    .form-row input, .form-row select { width: 100%; padding: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-color); color: var(--text-primary); }
-
-    .toggle-btn {
-      background: none; border: 1px solid var(--border-color); color: var(--text-secondary);
-      padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;
+    .panel-title { 
+      font-size: 14px; color: var(--amber-dim); margin-bottom: 8px; 
+      letter-spacing: 2px; text-transform: uppercase;
     }
+
+    .panel-value { 
+      font-size: 36px; line-height: 1.1; 
+    }
+
+    @media (max-width: 768px) {
+      .panel-value { font-size: 28px; }
+    }
+
+    /* === MAIN CONTENT GRID === */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    /* === DAILY LOG PANEL === */
+    .daily-log-panel {
+      background: var(--bg-dark);
+      border: 2px solid var(--amber-dim);
+      padding: 20px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--amber-dim);
+    }
+
+    .panel-title-lg { font-size: 24px; letter-spacing: 3px; }
+
+    /* === CALL ENTRY === */
+    .call-entry {
+      background: rgba(255, 176, 0, 0.03);
+      border-left: 4px solid var(--amber-primary);
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+
+    .call-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .call-meta { font-size: 14px; color: var(--amber-dim); margin-bottom: 5px; }
+    
+    .call-note { 
+      font-style: italic; font-size: 14px; 
+      padding-top: 8px; border-top: 1px dashed var(--amber-dim); margin-top: 8px; color: #e0c070;
+    }
+
+    /* === EDITABLE METRICS === */
+    .metrics-edit {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dotted var(--amber-dim);
+    }
+
+    @media (max-width: 480px) {
+      .metrics-edit { grid-template-columns: 1fr; }
+    }
+
+    .metric-field { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+    .metric-label { color: var(--amber-dim); width: 70px; }
+    
+    .metric-input {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--amber-dim);
+      color: var(--amber-primary);
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      padding: 4px 8px;
+      width: 100%;
+    }
+
+    .metric-input:focus { outline: none; border-color: var(--amber-primary); box-shadow: 0 0 5px rgba(255, 176, 0, 0.3); }
+
+    /* === WEEKLY SUMMARY GRID === */
+    .weekly-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid var(--amber-dim);
+    }
+
+    .day-card {
+      background: rgba(255, 176, 0, 0.03);
+      border: 1px solid var(--amber-dim);
+      padding: 10px;
+      text-align: center;
+      position: relative;
+    }
+
+    .day-name { font-size: 14px; color: var(--amber-dim); margin-bottom: 5px; }
+    
+    .day-value { 
+      font-size: 28px; font-weight: bold; margin-bottom: 3px; 
+    }
+
+    .day-best {
+      position: absolute; top: -10px; right: 5px;
+      background: var(--amber-primary); color: var(--bg-black);
+      font-size: 10px; padding: 2px 6px; letter-spacing: 1px;
+    }
+
+    /* === TIMER BUTTON (Main Dashboard) === */
+    .timer-trigger {
+      position: fixed;
+      bottom: 30px; right: 30px;
+      background: var(--bg-dark);
+      border: 3px solid var(--amber-primary);
+      color: var(--amber-primary);
+      font-family: 'VT323', monospace;
+      font-size: 28px;
+      padding: 15px 25px;
+      cursor: pointer;
+      z-index: 200;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 15px rgba(255, 176, 0, 0.3);
+    }
+
+    .timer-trigger:hover {
+      background: var(--amber-primary); color: var(--bg-black);
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(255, 176, 0, 0.6);
+    }
+
+    .timer-trigger::before { content: '⏰ '; }
+
+    /* === TIMER OVERLAY (Full Screen) === */
+    .timer-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--bg-black);
+      z-index: 500;
+      padding: 40px;
+      overflow-y: auto;
+    }
+
+    .timer-overlay.show { display: block; animation: fadeIn 0.3s ease; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* === TIMER SCREEN BORDER === */
+    .timer-screen {
+      max-width: 700px; margin: 40px auto;
+      border: 5px solid var(--amber-dim);
+      padding: 40px;
+      position: relative;
+    }
+
+    .timer-screen::before {
+      content: ''; position: absolute; top: -8px; left: -8px; right: -8px; bottom: -8px;
+      border: 2px solid rgba(255, 176, 0, 0.3); pointer-events: none;
+    }
+
+    /* === BIG TIMER DISPLAY === */
+    .timer-display {
+      font-size: 96px; text-align: center; margin-bottom: 30px; letter-spacing: 8px;
+      background: rgba(0, 0, 0, 0.5); padding: 20px; border: 2px solid var(--amber-dim);
+    }
+
+    /* === CATEGORY SELECTOR (Timer) === */
+    .category-selector {
+      display: flex; gap: 10px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap;
+    }
+
+    .cat-btn {
+      background: var(--bg-dark); border: 2px solid var(--amber-dim);
+      color: var(--amber-primary); font-family: 'VT323', monospace;
+      font-size: 16px; padding: 8px 16px; cursor: pointer; letter-spacing: 1px;
+    }
+
+    .cat-btn.active { background: var(--amber-primary); color: var(--bg-black); border-color: #fff; }
+    .cat-btn:hover:not(.active) { box-shadow: 0 0 10px rgba(255, 176, 0, 0.3); }
+
+    /* === RATING BUTTONS === */
+    .rating-buttons { display: flex; gap: 10px; justify-content: center; margin-bottom: 25px; }
+
+    .rating-btn {
+      width: 50px; height: 50px; border: 2px solid var(--amber-dim);
+      background: var(--bg-dark); color: var(--amber-primary);
+      font-family: 'VT323', monospace; font-size: 24px; cursor: pointer; letter-spacing: 1px;
+    }
+
+    .rating-btn:hover { box-shadow: 0 0 15px rgba(255, 176, 0, 0.4); transform: scale(1.1); }
+    
+    .rating-btn.selected { background: var(--amber-primary); color: var(--bg-black); 
+      box-shadow: 0 0 20px var(--amber-glow), inset 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+
+    /* === TIMER CONTROLS === */
+    .timer-controls { display: flex; gap: 15px; justify-content: center; margin-bottom: 30px; }
+
+    .btn-main {
+      font-family: 'VT323', monospace; font-size: 24px; padding: 12px 40px; cursor: pointer;
+      letter-spacing: 2px; transition: all 0.2s ease; border: none;
+    }
+
+    .btn-start { background: var(--amber-primary); color: var(--bg-black); font-weight: bold; }
+    .btn-stop { background: #cc3300; color: white; font-weight: bold; }
+    .btn-reset { background: transparent; border: 2px solid var(--amber-dim); color: var(--amber-primary); }
+
+    .btn-main:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 176, 0, 0.4); }
+    .btn-main:active:not(:disabled) { transform: translateY(0); }
+    .btn-main:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* === POST-CALL EDIT SCREEN (Initially Hidden) === */
+    .post-call-edit { display: none; margin-top: 25px; padding-top: 25px; border-top: 2px dashed var(--amber-dim); }
+    .post-call-edit.show { display: block; animation: fadeIn 0.3s ease; }
+
+    /* === EDIT FORM FIELDS === */
+    .edit-field { margin-bottom: 15px; }
+    
+    .edit-label { display: block; color: var(--amber-dim); margin-bottom: 8px; font-size: 16px; letter-spacing: 1px; }
+
+    .edit-input, .edit-textarea {
+      width: 100%; background: rgba(255, 255, 255, 0.05); border: 2px solid var(--amber-dim);
+      color: var(--amber-primary); font-family: 'VT323', monospace; font-size: 18px; padding: 10px;
+    }
+
+    .edit-textarea { min-height: 80px; resize: vertical; letter-spacing: 1px; }
+
+    /* === INSIGHTS PANEL === */
+    .insights-panel {
+      margin-top: 25px; padding: 20px; background: rgba(255, 176, 0, 0.05);
+      border: 2px solid var(--amber-dim); letter-spacing: 1px;
+    }
+
+    .insights-title { 
+      font-size: 22px; color: #ffcc44; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; 
+    }
+
+    /* === ADD CATEGORY FORM === */
+    .add-category-form { display: flex; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--amber-dim); align-items: center; }
+
+    .form-input {
+      flex: 1; background: rgba(255, 255, 255, 0.05); border: 2px solid var(--amber-dim);
+      color: var(--amber-primary); font-family: 'VT323', monospace; font-size: 16px; padding: 8px 12px; letter-spacing: 1px;
+    }
+
+    .form-input:focus { outline: none; border-color: var(--amber-primary); box-shadow: 0 0 10px rgba(255, 176, 0, 0.3); }
 
     /* === RESET MODAL === */
     .reset-modal {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.8); justify-content: center; align-items: center; z-index: 1000;
+      background: rgba(0, 0, 0, 0.9); z-index: 600; justify-content: center; align-items: center;
     }
 
-    .reset-modal.show { display: flex; }
-    .modal-content { background: var(--panel-bg); border-radius: 16px; padding: 30px; max-width: 450px; text-align: center; }
+    .reset-modal.show { display: flex; animation: fadeIn 0.3s ease; }
 
-    /* === RESPONSIVE === */
+    .modal-content {
+      background: var(--bg-dark); border: 4px solid var(--amber-primary); padding: 40px; max-width: 500px; text-align: center;
+      box-shadow: 0 0 50px rgba(255, 176, 0, 0.3);
+    }
+
+    .modal-content h2 { font-size: 32px; margin-bottom: 20px; letter-spacing: 3px; }
+    .modal-content p { color: var(--amber-dim); margin-bottom: 30px; letter-spacing: 1px; }
+
+    /* === EMPTY STATE === */
+    .empty-state { text-align: center; padding: 40px; color: var(--amber-dim); font-size: 20px; letter-spacing: 1px; }
+    
+    /* === MANUAL ENTRY TOGGLE === */
+    .toggle-btn {
+      background: transparent; border: 2px solid var(--amber-dim); color: var(--amber-primary);
+      font-family: 'VT323', monospace; padding: 8px 16px; cursor: pointer; letter-spacing: 1px;
+    }
+
+    .toggle-btn:hover { box-shadow: 0 0 10px rgba(255, 176, 0, 0.3); }
+
+    /* === MANUAL ENTRY FORM === */
+    .manual-entry-form { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--amber-dim); }
+    .manual-entry-form.show { display: block; animation: fadeIn 0.3s ease; }
+
+    /* === PROGRESS BAR === */
+    .progress-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--amber-dim); }
+    
+    .progress-bar-bg { background: rgba(0, 0, 0, 0.5); height: 16px; overflow: hidden; margin-top: 8px; border: 1px solid var(--amber-dim); }
+    
+    .progress-bar-fill { 
+      background: linear-gradient(90deg, #cc8c00, #ffb000, #ffcc44); height: 100%; transition: width 0.5s ease; 
+    }
+
+    /* === ACTIONS BUTTONS === */
+    .edit-actions { display: flex; gap: 10px; margin-top: 8px; font-size: 13px; }
+    
+    .action-btn {
+      background: transparent; border: 1px solid var(--amber-dim); color: var(--amber-primary);
+      padding: 4px 12px; cursor: pointer; font-family: 'VT323', monospace; letter-spacing: 1px;
+    }
+
+    .action-btn:hover { box-shadow: 0 0 8px rgba(255, 176, 0, 0.4); }
+
+    /* === RESPONSIVE ADJUSTMENTS === */
     @media (max-width: 768px) {
-      .timer-display { font-size: 80px; letter-spacing: 4px; }
-      .ticker-item { padding: 0 15px; gap: 10px; font-size: 13px; }
-      .container { padding: 15px; }
-      .metrics-edit { grid-template-columns: 1fr; }
+      .timer-display { font-size: 64px; letter-spacing: 4px; }
+      .panels { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .panel-value { font-size: 24px; }
     }
 
-    /* === EDIT BUTTONS === */
-    .edit-actions { margin-top: 8px; display: flex; gap: 10px; }
-    .action-btn { font-size: 12px; padding: 5px 12px; border-radius: 4px; cursor: pointer; border: none; background: var(--border-color); color: var(--text-primary); }
-    .action-btn:hover { background: rgba(255,255,255,0.1); }
-
-    /* === POST-ANXIETY SECTION (Initially Hidden) === */
-    .post-anxiety-section {
-      display: none;
-      margin-top: 15px;
-      padding: 15px;
-      background: rgba(79, 195, 247, 0.1);
-      border-radius: 8px;
+    @media (max-width: 480px) {
+      body { font-size: 16px; }
+      .ticker-item { padding: 0 15px; gap: 10px; font-size: 16px; }
+      .timer-screen { padding: 25px; margin: 20px auto; border-width: 3px; }
     }
 
-    .post-anxiety-section.show { display: block; }
+    /* === CURSOR BLINK (Retro Terminal) === */
+    @keyframes blink { 50% { opacity: 0; } }
+    .cursor-blink::after { content: '_'; animation: blink 1s step-end infinite; margin-left: 4px; color: var(--amber-primary); }
 
-    /* === NOTES SECTION (Initially Hidden) === */
-    .notes-section {
-      display: none; margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 8px;
-    }
+    /* === RETRO DECORATIONS === */
+    .retro-decoration { position: absolute; font-size: 36px; opacity: 0.2; pointer-events: none; }
+    .deco-top-left { top: 10px; left: 15px; }
+    .deco-bottom-right { bottom: 10px; right: 15px; }
 
-    .notes-section.show { display: block; }
+    /* === WEEKLY SUMMARY TOGGLE BUTTON === */
+    .weekly-toggle-btn { display: flex; align-items: center; gap: 8px; }
+    
+    /* === HIDE CLASS === */
+    .hidden { display: none !important; }
 
-    .notes-input { width: 100%; padding: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 14px; resize: vertical; min-height: 60px; }
-
-    /* === PROGRESS BAR FOR DAILY GOAL (High Score) === */
-    .progress-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color); }
-    .progress-bar-bg { background: rgba(255,255,255,0.1); border-radius: 8px; height: 12px; overflow: hidden; margin-top: 8px; }
-    .progress-bar-fill { background: linear-gradient(90deg, var(--accent-green), var(--led-orange)); height: 100%; transition: width 0.3s ease; border-radius: 8px; }
   </style>
 </head>
-<body>
+<body class="glow">
 
 <!-- SCROLLING TICKER BAR -->
 <div class="ticker-bar">
@@ -343,117 +493,179 @@
   </div>
 </div>
 
-<div class="container">
+<div class="dashboard">
 
-<!-- TIMER SECTION -->
-<div class="timer-section">
-  <div class="timer-display" id="timerDisplay">00:00:00</div>
-  
-  <div class="category-selector" id="categorySelector"></div>
-  
-  <div class="anxiety-section">
-    <span class="anxiety-label">Pre-Call Anxiety (1-5):</span>
-    <div class="rating-buttons" id="preAnxietyButtons"></div>
-  </div>
+  <!-- DASHBOARD PANELS (Always Visible) -->
+  <div class="panels glow">
+    <div class="panel">
+      <div class="panel-title">Calls Today</div>
+      <div class="panel-value" id="callsToday">0</div>
+    </div>
 
-  <button class="btn btn-secondary" style="margin-bottom: 20px;" onclick="showPostAnxiety()">😊 Log Post-Call Ease After Call</button>
+    <div class="panel">
+      <div class="panel-title">Revenue (Received)</div>
+      <div class="panel-value">$<span id="assetsReceived">0</span>K</div>
+    </div>
 
-  <!-- Post Anxiety Section -->
-  <div class="post-anxiety-section" id="postAnxietySection">
-    <div style="text-align: left; margin-bottom: 10px;">
-      <span class="anxiety-label">Post-Call Ease (1-5, where 5 = very easy):</span>
-      <div class="rating-buttons" id="postEaseButtons" style="margin-top: 8px;"></div>
+    <div class="panel">
+      <div class="panel-title">Pending Pipeline</div>
+      <div class="panel-value negative">$<span id="assetsPending">0</span>K</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Streak</div>
+      <div class="panel-value" id="streakCount">🔥 0</div>
     </div>
   </div>
 
-  <!-- Notes Section -->
-  <div class="notes-section" id="notesSection">
-    <label style="display: block; color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">Call Notes:</label>
-    <textarea class="notes-input" id="callNotesInput" placeholder="What happened in this call? Any follow-ups needed?"></textarea>
-    <button class="btn btn-primary" onclick="saveCallEntry()" style="margin-top: 10px; width: 100%;">Save Call Entry</button>
-  </div>
-
-  <div class="timer-controls">
-    <button class="btn btn-primary" id="startBtn">START</button>
-    <button class="btn btn-secondary" id="stopBtn" disabled>STOP & EDIT</button>
-    <button class="btn btn-danger" id="resetBtn">RESET</button>
-  </div>
-
-  <!-- Manual Entry Toggle -->
-  <div style="margin-top: 15px;">
-    <button class="toggle-btn" onclick="document.getElementById('manualEntryForm').classList.toggle('show')">➕ Log Time Manually</button>
+  <!-- MAIN CONTENT GRID -->
+  <div class="main-grid">
     
-    <div class="manual-entry-form" id="manualEntryForm">
-      <h3 style="margin-bottom: 15px; color: var(--accent-blue);">Manual Time Entry</h3>
-      <div class="form-row">
-        <label>Duration (minutes)</label>
-        <input type="number" id="manualMinutes" min="1" placeholder="e.g., 25">
+    <!-- DAILY LOG PANEL (Left) -->
+    <div class="daily-log-panel glow">
+      <div class="panel-header">
+        <span class="panel-title-lg">TODAY'S ACTIVITY</span>
+        <button class="toggle-btn weekly-toggle-btn" onclick="document.getElementById('weeklyData').classList.toggle('hidden')">
+          📅 VIEW WEEKLY SUMMARY
+        </button>
       </div>
-      <div class="form-row">
-        <label>Category</label>
-        <select id="manualCategory"></select>
+
+      <!-- Weekly Summary Grid (Initially Hidden) -->
+      <div class="weekly-grid hidden" id="weeklyData"></div>
+
+      <!-- Call Entries Container -->
+      <div id="callEntriesContainer">
+        <div class="empty-state">NO CALLS LOGGED YET. HIT THE TIMER BUTTON TO START.</div>
       </div>
-      <button class="btn btn-primary" onclick="addManualEntry()">Log Entry</button>
+
+      <!-- Add Category Form -->
+      <div class="add-category-form">
+        <input type="text" class="form-input" id="newCategoryInput" placeholder="NEW CATEGORY NAME..." style="flex: 1;">
+        <button class="btn-main btn-reset" onclick="addCategory()">ADD</button>
+        <button class="btn-main btn-reset" onclick="resetBenchmarks()" title="Reset all high scores and averages">🔄 RESET BENCHMARKS</button>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="progress-section">
+        <div style="display: flex; justify-content: space-between; font-size: 16px;">
+          <span>TODAY'S CALLS</span>
+          <span id="progressText" style="color: var(--amber-dim);"></span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progressBar" style="width: 0%;"></div>
+        </div>
+      </div>
+
     </div>
+
+    <!-- RIGHT PANEL (Insights + Quick Stats) -->
+    <div class="insights-panel glow">
+      <div class="insights-title">💡 MENTOR INSIGHT</div>
+      <div id="insightContent" style="line-height: 1.7;">LOADING...</div>
+      
+      <!-- Manual Entry Toggle (Right Panel) -->
+      <button class="toggle-btn" style="margin-top: 20px; width: 100%;" onclick="document.getElementById('manualEntryForm').classList.toggle('show')">➕ LOG TIME MANUALLY</button>
+
+      <!-- Manual Entry Form -->
+      <div class="manual-entry-form hidden" id="manualEntryForm">
+        <h3 style="font-size: 24px; margin-bottom: 15px;">MANUAL TIME ENTRY</h3>
+        <div class="edit-field">
+          <label class="edit-label">DURATION (MINUTES)</label>
+          <input type="number" id="manualMinutes" min="1" placeholder="e.g., 25" class="edit-input">
+        </div>
+        <div class="edit-field">
+          <label class="edit-label">CATEGORY</label>
+          <select id="manualCategory" class="edit-input"></select>
+        </div>
+        <button class="btn-main btn-start" onclick="addManualEntry()">LOG ENTRY</button>
+      </div>
+    </div>
+
   </div>
 
-  <!-- High Score / Daily Goal Progress -->
-  <div class="progress-section">
-    <div style="display: flex; justify-content: space-between; font-size: 13px;">
-      <span style="color: var(--accent-yellow);">Today's Calls</span>
-      <span id="progressText" style="color: var(--text-secondary);"></span>
+</div>
+
+<!-- TIMER OVERLAY (Full Screen) -->
+<div class="timer-overlay" id="timerOverlay">
+  <div class="timer-screen glow">
+
+    <!-- TIMER DISPLAY SCREEN -->
+    <div id="timerDisplayScreen">
+      <div class="timer-display cursor-blink" id="timerDisplay">00:00:00</div>
+      
+      <div class="category-selector" id="categorySelector"></div>
+      
+      <div style="text-align: center; margin-bottom: 25px;">
+        <span style="color: var(--amber-dim); font-size: 16px; letter-spacing: 1px;">PRE-CALL ANXIETY (1-5)</span><br><br>
+        <div class="rating-buttons" id="preAnxietyButtons"></div>
+      </div>
+
+      <div class="timer-controls">
+        <button class="btn-main btn-start" id="startBtn">START</button>
+        <button class="btn-main btn-stop" id="stopBtn" disabled>STOP</button>
+        <button class="btn-main btn-reset" id="resetBtn">RESET</button>
+      </div>
+
+      <button class="toggle-btn" onclick="closeTimerOverlay()" style="margin-top: 20px;">✕ CLOSE TIMER</button>
     </div>
-    <div class="progress-bar-bg">
-      <div class="progress-bar-fill" id="progressBar" style="width: 0%;"></div>
+
+    <!-- POST-CALL EDIT SCREEN (Initially Hidden) -->
+    <div id="postCallEditScreen" class="post-call-edit">
+      <h3 style="font-size: 24px; margin-bottom: 15px;">POST-CALL METRICS</h3>
+      
+      <div style="text-align: center; margin-bottom: 20px;">
+        <span style="color: var(--amber-dim); font-size: 16px; letter-spacing: 1px;">POST-CALL EASE (1-5, WHERE 5 = EASIEST)</span><br><br>
+        <div class="rating-buttons" id="postEaseButtons"></div>
+      </div>
+
+      <div class="edit-field">
+        <label class="edit-label">PROSPECTS FROM THIS CALL</label>
+        <input type="number" id="prospectsInput" min="0" value="0" class="edit-input">
+      </div>
+
+      <div class="edit-field">
+        <label class="edit-label">$ PENDING VALUE ($)</label>
+        <input type="number" id="pendingInput" min="0" value="0" class="edit-input">
+      </div>
+
+      <div class="edit-field">
+        <label class="edit-label">$ RECEIVED VALUE ($)</label>
+        <input type="number" id="receivedInput" min="0" value="0" class="edit-input">
+      </div>
+
+      <div class="edit-field">
+        <label class="edit-label">CALL NOTES (OPTIONAL)</label>
+        <textarea id="callNotesInput" placeholder="What happened in this call? Any follow-ups needed?" class="edit-textarea"></textarea>
+      </div>
+
+      <div style="display: flex; gap: 15px; justify-content: center;">
+        <button class="btn-main btn-start" onclick="saveCallEntry()">💾 SAVE ENTRY</button>
+        <button class="btn-main btn-reset" onclick="closeTimerOverlay()">CANCEL</button>
+      </div>
     </div>
+
   </div>
 </div>
 
-<!-- INSIGHTS PANEL -->
-<div class="insights-panel">
-  <div class="insights-title">💡 Mentor Insight</div>
-  <div class="insight-content" id="insightContent"></div>
-</div>
-
-<!-- DAILY LOG -->
-<div class="daily-log">
-  <div class="log-header">
-    <span class="log-title">Today's Calls</span>
-    <button class="toggle-btn" onclick="document.getElementById('weeklyData').classList.toggle('show')">📅 View Weekly Summary</button>
-  </div>
-
-  <!-- Weekly Data -->
-  <div class="weekly-data" id="weeklyData"></div>
-
-  <!-- Call Entries Container -->
-  <div id="callEntriesContainer"></div>
-
-  <!-- Add Category Form -->
-  <div class="add-category-form">
-    <input type="text" class="form-input" id="newCategoryInput" placeholder="New category name..." style="flex: 1;">
-    <button class="btn btn-secondary" onclick="addCategory()">Add</button>
-    <button class="btn btn-danger" title="Reset all high scores and averages">🔄 Reset Benchmarks</button>
-  </div>
-</div>
-
-<!-- RESET MODAL -->
+<!-- RESET CONFIRMATION MODAL -->
 <div class="reset-modal" id="resetModal">
-  <div class="modal-content">
-    <h2 style="margin-bottom: 15px;">Reset Benchmarks?</h2>
-    <p style="color: var(--text-secondary); margin-bottom: 20px;">This will clear all high scores and averages. You can't undo this.</p>
+  <div class="modal-content glow">
+    <h2>RESET BENCHMARKS?</h2>
+    <p>This will clear all high scores and averages. You cannot undo this.</p>
     <div style="display: flex; gap: 15px; justify-content: center;">
-      <button class="btn btn-primary" onclick="confirmReset()">Yes, Reset</button>
-      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-main btn-start" onclick="confirmReset()">YES, RESET</button>
+      <button class="btn-main btn-reset" onclick="closeModal()">CANCEL</button>
     </div>
   </div>
 </div>
 
-</div>
+<!-- TIMER TRIGGER BUTTON (Sticky Bottom Right) -->
+<button class="timer-trigger" id="timerTrigger" onclick="openTimerOverlay()">START TIMER</button>
 
 <script>
 /**
- * ADVISORFLOW - Call Tracking App (FIXED VERSION)
- * Features: Scrolling ticker, Editable metrics per call, Full data management
+ * ADVISORFLOW - 80s Stock Broker Dashboard
+ * Features: CRT effects, scrolling ticker, editable metrics, mechanical sounds
  */
 
 // === STATE MANAGEMENT ===
@@ -498,9 +710,16 @@ const elements = {
   preAnxietyButtons: document.getElementById('preAnxietyButtons'),
   postEaseButtons: document.getElementById('postEaseButtons'),
   callNotesInput: document.getElementById('callNotesInput'),
+  prospectsInput: document.getElementById('prospectsInput'),
+  pendingInput: document.getElementById('pendingInput'),
+  receivedInput: document.getElementById('receivedInput'),
   
   callEntriesContainer: document.getElementById('callEntriesContainer'),
-  tickerTrack: document.getElementById('tickerTrack')
+  tickerTrack: document.getElementById('tickerTrack'),
+  
+  timerOverlay: document.getElementById('timerOverlay'),
+  timerDisplayScreen: document.getElementById('timerDisplayScreen'),
+  postCallEditScreen: document.getElementById('postCallEditScreen')
 };
 
 // === INITIALIZATION ===
@@ -508,10 +727,17 @@ function init() {
   loadData();
   renderCategories();
   renderAnxietyButtons();
+  renderPostEaseButtons();
   renderCallEntries();
   updateTicker();
   generateInsight();
   
+  // Populate manual entry dropdown
+  const manualCatSelect = document.getElementById('manualCategory');
+  manualCatSelect.innerHTML = appState.categories.map(c => 
+    `<option value="${c}">${c}</option>`
+  ).join('');
+
   // Event Listeners
   elements.startBtn.addEventListener('click', startTimer);
   elements.stopBtn.addEventListener('click', stopTimer);
@@ -521,7 +747,7 @@ function init() {
     if (e.key === 'Enter') addCategory();
   });
 
-  // Start ticker animation
+  // Start ticker animation loop for smooth updates
   setInterval(updateTicker, 1000);
 }
 
@@ -529,11 +755,15 @@ function init() {
 function loadData() {
   const saved = localStorage.getItem('advisorflow_data');
   if (saved) {
-    const parsed = JSON.parse(saved);
-    appState.categories = parsed.categories || appState.categories;
-    appState.activeCategory = parsed.activeCategory || appState.activeCategory;
-    appState.dailyLogs = parsed.dailyLogs || [];
-    appState.benchmarks = parsed.benchmarks || appState.benchmarks;
+    try {
+      const parsed = JSON.parse(saved);
+      appState.categories = parsed.categories || appState.categories;
+      appState.activeCategory = parsed.activeCategory || appState.activeCategory;
+      appState.dailyLogs = parsed.dailyLogs || [];
+      appState.benchmarks = parsed.benchmarks || appState.benchmarks;
+    } catch (e) {
+      console.error('Data load error:', e);
+    }
   }
 }
 
@@ -553,7 +783,6 @@ function startTimer() {
   
   appState.timer.running = true;
   appState.timer.startTime = Date.now();
-  
   elements.startBtn.disabled = true;
   elements.stopBtn.disabled = false;
   elements.resetBtn.disabled = true;
@@ -577,10 +806,8 @@ function stopTimer() {
   elements.stopBtn.disabled = true;
   elements.resetBtn.disabled = false;
   
-  // Show post-call editing section
-  showPostAnxiety();
-  document.getElementById('notesSection').classList.add('show');
-  
+  // Switch to edit screen
+  switchToPostCallEdit();
   playClickSound('stop');
 }
 
@@ -592,14 +819,29 @@ function resetTimer() {
   appState.currentCall.postEase = null;
   
   formatTimerDisplay(0);
-  hidePostAnxiety();
-  document.getElementById('notesSection').classList.remove('show');
-  elements.callNotesInput.value = '';
-  
-  renderCategories();
-  renderAnxietyButtons();
+  resetForm();
   
   playClickSound('reset');
+}
+
+function switchToPostCallEdit() {
+  elements.timerDisplayScreen.classList.add('hidden');
+  elements.postCallEditScreen.classList.add('show');
+  
+  // Reset edit form values from current call state
+  elements.prospectsInput.value = appState.currentCall.prospectsLogged || 0;
+  elements.pendingInput.value = appState.currentCall.assetsPendingValue || 0;
+  elements.receivedInput.value = appState.currentCall.assetsReceivedValue || 0;
+  
+  // If anxiety was rated, show that too for comparison (optional enhancement)
+}
+
+function resetForm() {
+  appState.currentCall.preAnxiety = null;
+  appState.currentCall.postEase = null;
+  elements.callNotesInput.value = '';
+  renderAnxietyButtons();
+  renderPostEaseButtons();
 }
 
 function formatTimerDisplay(totalSeconds) {
@@ -611,16 +853,36 @@ function formatTimerDisplay(totalSeconds) {
     `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }
 
-// === POST-ANXIETY SECTION ===
-function showPostAnxiety() {
-  document.getElementById('postAnxietySection').classList.add('show');
-  renderPostEaseButtons();
+// === OVERLAY FUNCTIONS ===
+function openTimerOverlay() {
+  // Check if we're in post-call edit mode (show that screen instead)
+  if (!appState.timer.running && appState.currentCall.durationMinutes > 0) {
+    elements.timerDisplayScreen.classList.add('hidden');
+    elements.postCallEditScreen.classList.add('show');
+  } else {
+    // Reset to timer display for new call
+    elements.timerDisplayScreen.classList.remove('hidden');
+    elements.postCallEditScreen.classList.remove('show');
+    
+    if (appState.currentCall.durationMinutes > 0) {
+      formatTimerDisplay(appState.currentCall.durationMinutes * 60);
+    } else {
+      formatTimerDisplay(0);
+    }
+    
+    resetForm();
+  }
+  
+  elements.timerOverlay.classList.add('show');
 }
 
-function hidePostAnxiety() {
-  document.getElementById('postAnxietySection').classList.remove('show');
-  appState.currentCall.postEase = null;
-  document.getElementById('callNotesInput').value = '';
+function closeTimerOverlay() {
+  // If we have unsaved data, confirm before closing
+  if (appState.currentCall.durationMinutes > 0 && !elements.postCallEditScreen.classList.contains('hidden')) {
+    if (!confirm('You have an unsaved call entry. Close anyway?')) return;
+  }
+  
+  elements.timerOverlay.classList.remove('show');
 }
 
 // === RENDER FUNCTIONS ===
@@ -630,31 +892,33 @@ function renderCategories() {
   appState.categories.forEach(cat => {
     const btn = document.createElement('button');
     btn.className = `cat-btn ${appState.activeCategory === cat ? 'active' : ''}`;
-    btn.textContent = cat;
+    btn.textContent = cat.toUpperCase();
     btn.onclick = () => selectCategory(cat);
     
     if (appState.categories.length > 1) {
       const deleteBtn = document.createElement('span');
-      deleteBtn.innerHTML = '&times;';
-      deleteBtn.style.cssText = 'margin-left: 8px; cursor: pointer; color: var(--led-red); font-weight: bold;';
+      deleteBtn.innerHTML = '×';
+      deleteBtn.style.cssText = 'margin-left: 8px; cursor: pointer; color: #ff4444; font-weight: bold; font-size: 16px;';
       deleteBtn.onclick = (e) => { e.stopPropagation(); removeCategory(cat); };
       btn.appendChild(deleteBtn);
     }
     
     elements.categorySelector.appendChild(btn);
   });
-  
-  // Also populate manual entry dropdown
-  const manualCatSelect = document.getElementById('manualCategory');
-  manualCatSelect.innerHTML = appState.categories.map(c => 
-    `<option value="${c}">${c}</option>`
-  ).join('');
 }
 
 function selectCategory(category) {
   appState.activeCategory = category;
   saveData();
   renderCategories();
+  
+  // Also update manual entry dropdown
+  const manualCatSelect = document.getElementById('manualCategory');
+  if (manualCatSelect) {
+    manualCatSelect.innerHTML = appState.categories.map(c => 
+      `<option value="${c}">${c}</option>`
+    ).join('');
+  }
 }
 
 // Pre-Anxiety Buttons (1-5 where 5 is most anxious)
@@ -681,7 +945,7 @@ function renderPostEaseButtons() {
   
   for (let i = 1; i <= 5; i++) {
     const btn = document.createElement('button');
-    // Note: Higher number = easier call (opposite of pre-anxiety)
+    // Higher number = easier call (opposite of pre-anxiety)
     btn.className = `rating-btn ${appState.currentCall.postEase === i ? 'selected' : ''}`;
     btn.textContent = i;
     btn.onclick = () => selectPostEase(i);
@@ -703,12 +967,9 @@ function renderCallEntries() {
   
   if (todaysCalls.length === 0) {
     elements.callEntriesContainer.innerHTML = `
-      <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
-        No calls logged today. Start the timer to log your first one!
-      </div>
+      <div class="empty-state">NO CALLS LOGGED YET. HIT THE TIMER BUTTON TO START.</div>
     `;
     
-    // Show weekly data even with no calls
     renderWeeklyData();
     return;
   }
@@ -718,56 +979,50 @@ function renderCallEntries() {
     entry.className = 'call-entry';
     
     let anxietyDisplay = '';
-    let easeDisplay = '';
-    
     if (call.preAnxiety !== null || call.postEase !== null) {
       const preText = call.preAnxiety !== null ? `${call.preAnxiety}/5` : '-';
       const postText = call.postEase !== null ? `${call.postEase}/5` : '-';
       
-      anxietyDisplay = `<span class="call-meta">📊 Pre: ${preText} | 😊 Post: ${postText}</span>`;
+      anxietyDisplay = `<div class="call-meta">📊 PRE: ${preText} | 😊 POST: ${postText}</div>`;
     }
     
     let editButtonsHtml = '';
     if (todaysCalls.length === 1) { // Only allow editing today's entries
       editButtonsHtml = `
         <div class="edit-actions">
-          <button class="action-btn" onclick="toggleMetricsEdit(${call.id})">✏️ Edit Metrics</button>
-          <button class="action-btn" style="color: var(--led-red);" onclick="deleteCallEntry(${call.id})">🗑️ Delete</button>
+          <button class="action-btn" onclick="toggleMetricsEdit(${call.id})">✏️ EDIT METRICS</button>
+          <button class="action-btn" style="color: #ff4444;" onclick="deleteCallEntry(${call.id})">🗑️ DELETE</button>
         </div>
       `;
     }
     
     entry.innerHTML = `
       <div class="call-header">
-        <div>
-          <strong>${call.category}</strong> • ${formatTime(call.durationMinutes * 60)}
-        </div>
-        <div style="text-align: right;">
-          <span class="ticker-value">$${(call.assetsReceivedValue || 0).toLocaleString()}</span>
-        </div>
+        <span>${call.category.toUpperCase()} • ${formatTime(call.durationMinutes * 60)}</span>
+        <span style="color: var(--amber-primary);">$${(call.assetsReceivedValue || 0).toLocaleString()}</span>
       </div>
       ${anxietyDisplay}
-      ${call.prospectsLogged > 0 ? `<span class="call-meta">📈 ${call.prospectsLogged} prospect(s)</span>` : ''}
+      ${call.prospectsLogged > 0 ? `<div class="call-meta">📈 ${call.prospectsLogged} PROSPECT(S)</div>` : ''}
       
       <!-- EDITABLE METRICS SECTION (Initially Hidden) -->
-      <div class="metrics-edit" id="metricsEdit-${call.id}" style="display: none;">
+      <div class="metrics-edit hidden" id="metricsEdit-${call.id}">
         <div class="metric-field">
-          <span class="metric-label">Prospects:</span>
+          <span class="metric-label">PROSPECTS:</span>
           <input type="number" class="metric-input" value="${call.prospectsLogged || 0}" min="0" onchange="updateCallMetric(${call.id}, 'prospects', this.value)">
         </div>
         <div class="metric-field">
-          <span class="metric-label">$ Pending:</span>
+          <span class="metric-label">$ PENDING:</span>
           <input type="number" class="metric-input" value="${call.assetsPendingValue || 0}" min="0" onchange="updateCallMetric(${call.id}, 'pending', this.value)">
         </div>
         <div class="metric-field">
-          <span class="metric-label">$ Received:</span>
+          <span class="metric-label">$ RECEIVED:</span>
           <input type="number" class="metric-input" value="${call.assetsReceivedValue || 0}" min="0" onchange="updateCallMetric(${call.id}, 'received', this.value)">
         </div>
       </div>
       
       ${editButtonsHtml}
       
-      ${call.notes ? `<div class="call-note">"${call.notes}"</div>` : ''}
+      ${call.notes ? `<div class="call-note">"${escapeHtml(call.notes)}"</div>` : ''}
     `;
     
     elements.callEntriesContainer.appendChild(entry);
@@ -779,10 +1034,10 @@ function renderCallEntries() {
 // === EDITABLE METRIC FUNCTIONS ===
 function toggleMetricsEdit(callId) {
   const metricsDiv = document.getElementById(`metricsEdit-${callId}`);
-  if (metricsDiv.style.display === 'none') {
-    metricsDiv.style.display = 'grid';
+  if (metricsDiv.classList.contains('hidden')) {
+    metricsDiv.classList.remove('hidden');
   } else {
-    metricsDiv.style.display = 'none';
+    metricsDiv.classList.add('hidden');
   }
 }
 
@@ -806,7 +1061,7 @@ function updateCallMetric(callId, metricType, value) {
 }
 
 function deleteCallEntry(callId) {
-  if (!confirm('Delete this call entry? This cannot be undone.')) return;
+  if (!confirm('DELETE THIS CALL ENTRY? CANNOT UNDO.')) return;
   
   appState.dailyLogs = appState.dailyLogs.filter(l => l.id !== callId);
   saveData();
@@ -821,25 +1076,29 @@ function saveCallEntry() {
   
   const today = new Date().toISOString().split('T')[0];
   
+  // Get values from edit form inputs
+  const prospects = parseInt(elements.prospectsInput.value) || 0;
+  const pending = parseInt(elements.pendingInput.value) || 0;
+  const received = parseInt(elements.receivedInput.value) || 0;
+  
   const callEntry = {
     id: Date.now(),
     date: today,
-    startTime: null, // From timer start time would go here if tracked
     durationMinutes: appState.currentCall.durationMinutes,
     category: appState.activeCategory,
-    preAnxiety: appState.currentCall.preAnxiety || 3,
+    preAnxiety: appState.currentCall.preAnxiety !== null ? appState.currentCall.preAnxiety : 3,
     postEase: appState.currentCall.postEase !== null ? appState.currentCall.postEase : 3,
-    notes: elements.callNotesInput.value,
-    prospectsLogged: appState.currentCall.prospectsLogged || 0,
-    assetsPendingValue: appState.currentCall.assetsPendingValue || 0,
-    assetsReceivedValue: appState.currentCall.assetsReceivedValue || 0
+    notes: elements.callNotesInput.value.trim(),
+    prospectsLogged: prospects,
+    assetsPendingValue: pending,
+    assetsReceivedValue: received
   };
   
   appState.dailyLogs.unshift(callEntry);
   saveData();
   
   // Reset form state
-  hidePostAnxiety();
+  closeTimerOverlay();
   renderCategories();
   renderCallEntries();
   updateTicker();
@@ -850,7 +1109,7 @@ function saveCallEntry() {
 function addManualEntry() {
   const minutes = parseInt(document.getElementById('manualMinutes').value);
   if (!minutes || minutes < 1) {
-    alert('Please enter a valid duration');
+    alert('PLEASE ENTER A VALID DURATION');
     return;
   }
   
@@ -859,7 +1118,6 @@ function addManualEntry() {
   const callEntry = {
     id: Date.now(),
     date: new Date().toISOString().split('T')[0],
-    startTime: null,
     durationMinutes: minutes,
     category: category,
     preAnxiety: 3, // Default for manual entry
@@ -876,7 +1134,7 @@ function addManualEntry() {
   updateTicker();
   generateInsight();
   
-  document.getElementById('manualEntryForm').classList.remove('show');
+  document.getElementById('manualEntryForm').classList.add('hidden');
 }
 
 // === ADD CATEGORY ===
@@ -886,7 +1144,7 @@ function addCategory() {
   
   if (!name) return;
   if (appState.categories.includes(name)) {
-    alert(`"${name}" already exists!`);
+    alert(`"${name}" ALREADY EXISTS!`);
     return;
   }
   
@@ -898,11 +1156,11 @@ function addCategory() {
 
 function removeCategory(category) {
   if (appState.categories.length <= 1) {
-    alert('You need at least one category!');
+    alert('YOU NEED AT LEAST ONE CATEGORY!');
     return;
   }
   
-  if (!confirm(`Delete "${category}"? Past entries will remain but won't have this category.`)) return;
+  if (!confirm(`DELETE "${category.uppercase()}?" PAST ENTRIES WILL REMAIN BUT WON'T HAVE THIS CATEGORY.`)) return;
   
   appState.categories = appState.categories.filter(c => c !== category);
   saveData();
@@ -944,23 +1202,20 @@ function renderWeeklyData() {
     }
   }
   
-  elements.weeklyData.innerHTML = `
-    <div class="weekly-grid">
-      ${Object.values(weekData).map(day => {
-        const isBest = day.calls === appState.benchmarks.bestDayCalls && day.calls > 0;
-        return `
-          <div style="position: relative;">
-            ${isBest ? '<span class="day-best">🏆 Best</span>' : ''}
-            <div class="day-name">${day.name}</div>
-            <div class="day-value" style="font-size: 20px;">${day.calls}</div>
-            <small>${formatTime(day.timeMinutes * 60)}</small><br>
-            <small style="color: var(--accent-green);">$${(day.revenue / 1000).toFixed(0)}K</small><br>
-            <small style="color: var(--text-secondary);">${day.prospects} prospects</small>
-          </div>
-        `;
-      }).join('')}
-    </div>
-  `;
+  const gridHtml = Object.values(weekData).map(day => {
+    const isBest = day.calls === appState.benchmarks.bestDayCalls && day.calls > 0;
+    return `
+      <div class="day-card">
+        ${isBest ? '<span class="day-best">🏆 BEST</span>' : ''}
+        <div class="day-name">${day.name}</div>
+        <div class="day-value" style="font-size: 24px;">${day.calls}</div>
+        <small style="color: var(--amber-dim);">${formatTime(day.timeMinutes * 60)}</small><br>
+        <small style="color: var(--amber-primary);">$${(day.revenue / 1000).toFixed(0)}K</small>
+      </div>
+    `;
+  }).join('');
+  
+  elements.weeklyData.innerHTML = gridHtml || '<div class="empty-state">NO DATA FOR LAST 7 DAYS</div>';
 }
 
 // === TICKER UPDATE (SCROLLING) ===
@@ -990,17 +1245,16 @@ function updateTicker() {
   
   // Build ticker items array
   const tickerItems = [
-    { label: 'Calls Today', value: totalCalls },
-    { label: 'Time Spent', value: formatTime(totalTimeMinutes * 60), isTime: true },
-    { label: 'Prospects', value: prospectsCount },
-    { label: '$ Assets (Received)', value: `$${assetsReceived.toLocaleString()}` },
-    { label: '$ Pending', value: `$${assetsPending.toLocaleString()}`, isNegative: assetsPending > 0 },
-    { label: 'Streak', value: `🔥${streak}` },
-    { label: 'Today vs Avg', value: totalCalls.toFixed(1) + '/'+ (appState.benchmarks.avgDailyCalls || 0).toFixed(1), isAvg: true }
+    { label: 'CALLS TODAY', value: totalCalls },
+    { label: 'TIME SPENT', value: formatTime(totalTimeMinutes * 60), isTime: true },
+    { label: 'PROSPECTS', value: prospectsCount },
+    { label: '$ ASSETS (REC)', value: `$${(assetsReceived / 1000).toFixed(0)}K` },
+    { label: '$ PENDING', value: `$${(assetsPending / 1000).toFixed(0)}K`, isNegative: assetsPending > 0 },
+    { label: 'STREAK', value: `🔥 ${streak}` },
+    { label: 'VS BEST DAY', value: `${totalCalls}/${appState.benchmarks.bestDayCalls || totalCalls}`, isAvg: true }
   ];
   
-  // Create ticker HTML
-  const track = document.getElementById('tickerTrack');
+  // Create ticker HTML (duplicated for seamless scroll)
   let html = '';
   
   for (const item of tickerItems) {
@@ -1015,13 +1269,19 @@ function updateTicker() {
     `;
   }
   
-  track.innerHTML = html + html; // Duplicate for seamless scroll
+  elements.tickerTrack.innerHTML = html + html; // Duplicate for seamless scroll
+  
+  // Update dashboard panel values
+  document.getElementById('callsToday').textContent = totalCalls;
+  document.getElementById('assetsReceived').textContent = (assetsReceived / 1000).toFixed(0);
+  document.getElementById('assetsPending').textContent = (assetsPending / 1000).toFixed(0);
+  document.getElementById('streakCount').textContent = `🔥 ${streak}`;
   
   // Update progress bar
   const bestDay = appState.benchmarks.bestDayCalls || totalCalls;
   const progressPercent = Math.min(100, (totalCalls / bestDay) * 100);
   document.getElementById('progressBar').style.width = `${progressPercent}%`;
-  document.getElementById('progressText').textContent = `vs Best: ${bestDay}`;
+  document.getElementById('progressText').textContent = `vs BEST: ${bestDay}`;
 }
 
 // === INSIGHTS GENERATION (SCIENCE-BACKED) ===
@@ -1041,7 +1301,7 @@ function generateInsight() {
       const avgActualDifficulty = 6 - avgPostEase;
       
       if (avgPreAnxiety > avgActualDifficulty + 1.5) {
-        return `Mind Lie Detected! 🧠 You estimated <span class="insight-highlight">${avgPreAnxiety.toFixed(1)}</span> anxiety before calls, but reality was only <span class="insight-highlight">${avgActualDifficulty.toFixed(1)}</span>. Your brain systematically overestimates difficulty—a pattern psychologists call "affective forecasting bias." Each action rewires this prediction loop.`;
+        return `MIND LIE DETECTED! 🧠 You estimated <span style="color: #ffcc44;">${avgPreAnxiety.toFixed(1)}</span> anxiety before calls, but reality was only <span style="color: #ffcc44;">${avgActualDifficulty.toFixed(1)}</span>. Your brain systematically overestimates difficulty—a pattern psychologists call "affective forecasting bias." Each action rewires this prediction loop.`;
       }
       return null;
     },
@@ -1057,7 +1317,7 @@ function generateInsight() {
       const lastCall = todaysCalls[todaysCalls.length - 1].preAnxiety;
       
       if (firstCall > lastCall + 1) {
-        return `Warm-Up Effect in Action! 🔥 Your first call averaged <span class="insight-highlight">${firstCall}</span> anxiety, dropping to <span class="insight-highlight">${lastCall}</span> by the end. This mirrors athletic warm-ups—your brain builds momentum with each action.`;
+        return `WARM-UP EFFECT IN ACTION! 🔥 Your first call averaged <span style="color: #ffcc44;">${firstCall}</span> anxiety, dropping to <span style="color: #ffcc44;">${lastCall}</span> by the end. This mirrors athletic warm-ups—your brain builds momentum with each action.`;
       }
       return null;
     },
@@ -1078,9 +1338,9 @@ function generateInsight() {
       }
       
       if (streak >= 5 && streak < 10) {
-        return `Streak Alert! 🔥 ${streak} day(s) in a row. Behavioral economics shows humans are motivated by "loss aversion"—the pain of breaking a streak feels worse than the joy of starting one.`;
+        return `STREAK ALERT! 🔥 ${streak} DAY(S) IN A ROW. Behavioral economics shows humans are motivated by "loss aversion"—the pain of breaking a streak feels worse than the joy of starting one.`;
       } else if (streak >= 10) {
-        return `Incredible Momentum! 🚀 ${streak} days strong! Research on habit formation (~66 days) shows behavior shifts from "willpower-dependent" to "identity-based."`;
+        return `INCREDIBLE MOMENTUM! 🚀 ${streak} DAYS STRONG! Research on habit formation (~66 days) shows behavior shifts from "willpower-dependent" to "identity-based."`;
       }
       return null;
     },
@@ -1108,9 +1368,9 @@ function generateInsight() {
         const avgRevenuePerHour = histTotalMin > 0 ? (histTotalRev / histTotalMin) * 60 : 0;
         
         if (revenuePerHour > avgRevenuePerHour * 1.2 && avgRevenuePerHour > 0) {
-          return `Efficiency Champion! 💰 You're earning <span class="insight-highlight">$${revenuePerHour.toFixed(0)}</span>/hour today, above your average of <span class="insight-highlight">$${avgRevenuePerHour.toFixed(0)}</span>. Protect these hours.`;
+          return `EFFICIENCY CHAMPION! 💰 You're earning <span style="color: #ffcc44;">$${revenuePerHour.toFixed(0)}</span>/hour today, above your average of <span style="color: #ffcc44;">$${avgRevenuePerHour.toFixed(0)}</span>. PROTECT THESE HOURS.`;
         } else if (totalRevenue > 10000) {
-          return `Strong Value Creation! 💎 <span class="insight-highlight">$${totalRevenue.toLocaleString()}</span> in assets today from ${todaysCalls.length} calls. That's the impact that matters.`;
+          return `STRONG VALUE CREATION! 💎 <span style="color: #ffcc44;">$${totalRevenue.toLocaleString()}</span> IN ASSETS TODAY from ${todaysCalls.length} calls. That's the impact that matters.`;
         }
       }
       return null;
@@ -1122,14 +1382,14 @@ function generateInsight() {
       const todaysCalls = appState.dailyLogs.filter(l => l.date === today).length;
       
       if (todaysCalls > 0) {
-        return `You've made <span class="insight-highlight">${todaysCalls} call(s)</span> today. Research shows small, consistent behaviors create significant long-term results. You're building momentum.`;
+        return `YOU'VE MADE <span style="color: #ffcc44;">${todaysCalls} CALL(S)</span> TODAY. Research shows small, consistent behaviors create significant long-term results. You're building momentum.`;
       }
       
       if (appState.dailyLogs.length > 0) {
-        return `You've logged <span class="insight-highlight">${appState.dailyLogs.length} total call(s)</span>. This data is your compass—each entry helps you see patterns and make better decisions.`;
+        return `YOU'VE LOGGED <span style="color: #ffcc44;">${appState.dailyLogs.length} TOTAL CALL(S)</span>. This data is your compass—each entry helps you see patterns and make better decisions.`;
       }
       
-      return `Ready to build momentum? Starting just one call changes the equation from "avoidance" to action. The hardest part is always beginning.`;
+      return `READY TO BUILD MOMENTUM? STARTING JUST ONE CALL CHANGES THE EQUATION FROM "AVOIDANCE" TO ACTION. THE HARDEST PART IS ALWAYS BEGINNING.`;
     }
   ];
   
@@ -1148,44 +1408,117 @@ function formatTime(totalSeconds) {
   const m = Math.floor((totalSeconds % 3600) / 60);
   
   if (h > 0) {
-    return `${h}h ${m}m`;
+    return `${h}H ${m}M`;
   }
-  return `${m}m`;
+  return `${m}M ${(Math.round(totalSeconds % 60))}S`;
 }
 
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// === MECHANICAL SOUND EFFECTS (Web Audio API) ===
 function playClickSound(type = 'click') {
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   
-  const oscillator = audioCtx.createOscillator();
-  const gainNode = audioCtx.createGain();
-  
-  oscillator.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
-  
-  if (type === 'click') {
-    oscillator.frequency.value = 800;
-    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-    oscillator.start(audioCtx.currentTime);
-    oscillator.stop(audioCtx.currentTime + 0.1);
+  // Create a mechanical click/clack sound using multiple oscillators
+  if (type === 'click' || type === 'stop' || type === 'reset') {
+    // Main click body
+    const osc1 = audioCtx.createOscillator();
+    const gain1 = audioCtx.createGain();
+    
+    osc1.connect(gain1);
+    gain1.connect(audioCtx.destination);
+    
+    if (type === 'click') {
+      osc1.frequency.setValueAtTime(800, audioCtx.currentTime);
+      osc1.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.05);
+      gain1.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+    } else if (type === 'stop') {
+      osc1.frequency.setValueAtTime(600, audioCtx.currentTime);
+      osc1.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.15);
+      gain1.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+    } else if (type === 'reset') {
+      osc1.frequency.setValueAtTime(400, audioCtx.currentTime);
+      osc1.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.25);
+      gain1.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+    }
+    
+    osc1.start(audioCtx.currentTime);
+    osc1.stop(audioCtx.currentTime + (type === 'click' ? 0.1 : type === 'stop' ? 0.2 : 0.3));
+    
+    // Add high-frequency "clack" overlay
+    const osc2 = audioCtx.createOscillator();
+    const gain2 = audioCtx.createGain();
+    osc2.connect(gain2);
+    gain2.connect(audioCtx.destination);
+    osc2.frequency.setValueAtTime(1500, audioCtx.currentTime);
+    gain2.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+    osc2.start(audioCtx.currentTime);
+    osc2.stop(audioCtx.currentTime + 0.08);
+    
   } else if (type === 'start') {
-    oscillator.frequency.value = 600;
-    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-    oscillator.start(audioCtx.currentTime);
-    oscillator.stop(audioCtx.currentTime + 0.15);
-  } else if (type === 'stop') {
-    oscillator.frequency.value = 400;
-    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-    oscillator.start(audioCtx.currentTime);
-    oscillator.stop(audioCtx.currentTime + 0.2);
-  } else if (type === 'reset') {
-    oscillator.frequency.value = 300;
-    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
-    oscillator.start(audioCtx.currentTime);
-    oscillator.stop(audioCtx.currentTime + 0.25);
+    // Start sound with more prominence
+    const osc1 = audioCtx.createOscillator();
+    const gain1 = audioCtx.createGain();
+    osc1.connect(gain1);
+    gain1.connect(audioCtx.destination);
+    osc1.frequency.setValueAtTime(600, audioCtx.currentTime);
+    gain1.gain.setValueAtTime(0.25, audioCtx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+    osc1.start(audioCtx.currentTime);
+    osc1.stop(audioCtx.currentTime + 0.15);
+    
+    const osc2 = audioCtx.createOscillator();
+    const gain2 = audioCtx.createGain();
+    osc2.connect(gain2);
+    gain2.connect(audioCtx.destination);
+    osc2.frequency.setValueAtTime(1200, audioCtx.currentTime);
+    gain2.gain.setValueAtTime(0.12, audioCtx.currentTime);
+    gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+    osc2.start(audioCtx.currentTime);
+    osc2.stop(audioCtx.currentTime + 0.1);
+    
+  } else if (type === 'save') {
+    // Save confirmation sound
+    const osc1 = audioCtx.createOscillator();
+    const gain1 = audioCtx.createGain();
+    osc1.connect(gain1);
+    gain1.connect(audioCtx.destination);
+    osc1.frequency.setValueAtTime(800, audioCtx.currentTime);
+    gain1.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+    osc1.start(audioCtx.currentTime);
+    osc1.stop(audioCtx.currentTime + 0.2);
+    
+    const osc2 = audioCtx.createOscillator();
+    const gain2 = audioCtx.createGain();
+    osc2.connect(gain2);
+    gain2.connect(audioCtx.destination);
+    osc2.frequency.setValueAtTime(1600, audioCtx.currentTime);
+    gain2.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+    osc2.start(audioCtx.currentTime);
+    osc2.stop(audioCtx.currentTime + 0.15);
+    
+    // Second tone for "double confirmation"
+    setTimeout(() => {
+      const osc3 = audioCtx.createOscillator();
+      const gain3 = audioCtx.createGain();
+      osc3.connect(gain3);
+      gain3.connect(audioCtx.destination);
+      osc3.frequency.setValueAtTime(800, audioCtx.currentTime + 0.1);
+      gain3.gain.setValueAtTime(0.12, audioCtx.currentTime + 0.1);
+      gain3.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+      osc3.start(audioCtx.currentTime + 0.1);
+      osc3.stop(audioCtx.currentTime + 0.25);
+    }, 80);
   }
 }
 
