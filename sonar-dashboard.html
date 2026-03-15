@@ -1,1006 +1,1541 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TITAN // Derelict Protocol</title>
-  <style>
-    :root {
-      --bg: #08110b;
-      --panel: #0f1a12;
-      --line: #1b3420;
-      --text: #b7ffb7;
-      --muted: #78b378;
-      --accent: #6bc26b;
-      --warning: #e2d36a;
-      --danger: #ff7c7c;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Time Compass</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --clinical: #4CAF50;
+            --research: #FF9800;
+            --education: #2196F3;
+            --admin: #9C27B0;
+        }
 
-    * { box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            line-height: 1.6;
+        }
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background:
-        radial-gradient(circle at top, rgba(30, 70, 35, 0.20), transparent 40%),
-        linear-gradient(180deg, #040806 0%, var(--bg) 100%);
-      color: var(--text);
-      font-family: "Courier New", Courier, monospace;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-    }
+        /* Header */
+        .header {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-    .terminal {
-      width: min(980px, 100%);
-      height: min(92vh, 820px);
-      background: rgba(6, 12, 8, 0.95);
-      border: 1px solid var(--line);
-      box-shadow: 0 0 0 1px rgba(107, 194, 107, 0.08), 0 0 30px rgba(0, 0, 0, 0.4);
-      display: grid;
-      grid-template-rows: auto auto 1fr auto;
-      overflow: hidden;
-      position: relative;
-    }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-    .terminal::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(
-        to bottom,
-        rgba(255,255,255,0.03),
-        rgba(255,255,255,0.03) 1px,
-        transparent 1px,
-        transparent 3px
-      );
-      pointer-events: none;
-      opacity: 0.16;
-    }
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
 
-    .header {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--line);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      background: rgba(13, 24, 16, 0.92);
-    }
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
 
-    .title {
-      font-weight: 700;
-      letter-spacing: 1px;
-      color: var(--accent);
-    }
+        /* Main Layout */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+        }
 
-    .sub {
-      color: var(--muted);
-      font-size: 12px;
-    }
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
+        }
 
-    .statusbar {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(10, 18, 12, 0.95);
-      font-size: 13px;
-    }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
 
-    .statusbox {
-      border: 1px solid var(--line);
-      padding: 8px 10px;
-      min-height: 42px;
-      background: rgba(255,255,255,0.02);
-    }
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
 
-    .statusbox .label {
-      color: var(--muted);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      margin-bottom: 4px;
-    }
+        /* Timer Section */
+        .timer-section {
+            text-align: center;
+            padding: 2rem;
+        }
 
-    .output {
-      padding: 16px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      line-height: 1.45;
-      font-size: 16px;
-      position: relative;
-      z-index: 1;
-    }
+        .timer-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
 
-    .line { margin-bottom: 8px; }
-    .system { color: var(--text); }
-    .player { color: var(--accent); }
-    .warning { color: var(--warning); }
-    .danger { color: var(--danger); }
-    .muted { color: var(--muted); }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--gray-300);
+        }
 
-    .inputrow {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 14px 16px;
-      border-top: 1px solid var(--line);
-      background: rgba(10, 18, 12, 0.97);
-      position: relative;
-      z-index: 1;
-    }
+        .status-dot.active {
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
 
-    .prompt {
-      color: var(--accent);
-      font-weight: bold;
-      min-width: 72px;
-    }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
 
-    input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: var(--text);
-      outline: none;
-      font: inherit;
-      font-size: 16px;
-    }
+        .timer-display {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            font-family: 'SF Mono', Monaco, monospace;
+            margin-bottom: 1.5rem;
+        }
 
-    .controls {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
+        .timer-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
 
-    button {
-      background: #112015;
-      color: var(--text);
-      border: 1px solid var(--line);
-      padding: 8px 10px;
-      font: inherit;
-      cursor: pointer;
-    }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-    button:hover { border-color: var(--accent); }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
 
-    @media (max-width: 760px) {
-      .statusbar { grid-template-columns: repeat(2, 1fr); }
-      .header { flex-direction: column; align-items: flex-start; }
-      .inputrow { flex-wrap: wrap; }
-      .prompt { min-width: auto; }
-      .controls { width: 100%; }
-    }
-  </style>
+        .btn-primary:hover {
+            background: #5756d1;
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Category Cards */
+        .category-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .category-item {
+            padding: 1rem;
+            border-radius: 12px;
+            background: var(--gray-50);
+            transition: all 0.2s;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .category-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .category-item.active {
+            background: var(--gray-100);
+            border-color: var(--primary);
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .category-name {
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .category-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.75rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .category-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+
+        /* Trajectory Section */
+        .trajectory-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .progress-ring-container {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .progress-ring {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 0.5rem;
+        }
+
+        /* Weekly View */
+        .week-view {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .day-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .day-cell {
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .day-cell:hover {
+            background: var(--gray-100);
+        }
+
+        .day-cell.today {
+            background: var(--primary);
+            color: white;
+        }
+
+        .day-cell.has-log::after {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+            display: block;
+            margin: 0.25rem auto;
+        }
+
+        .day-number {
+            font-weight: 600;
+            font-size: 1.125rem;
+        }
+
+        .day-hours {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Day Detail Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--gray-100);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-400);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        /* Mentor Nudge */
+        .nudge-card {
+            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+            border: 2px solid var(--warning);
+        }
+
+        .nudge-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .nudge-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--warning);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        /* Insights */
+        .insight-card {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-left: 4px solid var(--success);
+        }
+
+        .insight-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Quick Log */
+        .quick-log-form {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .form-select, .form-input {
+            padding: 0.625rem 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: 8px;
+            font-size: 0.9375rem;
+            background: white;
+        }
+
+        .form-select:focus, .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Empty States */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--gray-400);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Utility Classes */
+        .text-sm { font-size: 0.875rem; }
+        .text-xs { font-size: 0.75rem; }
+        .font-bold { font-weight: 600; }
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-2 { gap: 0.5rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .hidden { display: none !important; }
+    </style>
 </head>
 <body>
-  <div class="terminal" id="terminal">
-    <div class="header">
-      <div>
-        <div class="title">TITAN // DERELICT PROTOCOL</div>
-        <div class="sub">Text terminal adventure • save/resume enabled • single-file build</div>
-      </div>
-      <div class="sub">Type HELP at any time</div>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">🧭</div>
+            Faculty Time Compass
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-secondary" onclick="app.exportData()">Export Data</button>
+            <button class="btn btn-secondary" onclick="app.resetData()">Reset All</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- Left Column: Timer & Categories -->
+        <aside>
+            <!-- Timer Section -->
+            <div class="card timer-section">
+                <h2 class="card-title" style="text-align: center; margin-bottom: 1rem;">⏱️ Timer</h2>
+                
+                <div class="timer-status">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span class="font-bold" id="timerStatusText">Inactive</span>
+                </div>
+
+                <div class="timer-display" id="timerDisplay">00:00:00</div>
+
+                <div class="timer-controls">
+                    <button class="btn btn-primary" id="startTimerBtn" onclick="app.toggleTimer()">
+                        ▶ Start Timer
+                    </button>
+                    <button class="btn btn-secondary" onclick="app.addQuickLog()">
+                        ⏰ Quick Log
+                    </button>
+                </div>
+
+                <p class="text-sm text-gray-400 mt-3">
+                    Timer runs in background even if you close this tab
+                </p>
+            </div>
+
+            <!-- Categories -->
+            <div class="card" style="margin-top: 1.5rem;">
+                <div class="card-header">
+                    <h2 class="card-title">📊 Your Categories</h2>
+                    <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;" onclick="app.showCategoryModal()">+ Add</button>
+                </div>
+                
+                <div class="category-list" id="categoryList">
+                    <!-- Categories rendered here -->
+                </div>
+
+                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--gray-100);">
+                    <h3 class="text-sm font-bold mb-2">Year-End Targets</h3>
+                    <button class="btn btn-secondary" style="width: 100%;" onclick="app.showTargetModal()">🎯 Set Annual Goals</button>
+                </div>
+            </div>
+
+            <!-- Insights -->
+            <div class="card insight-card" style="margin-top: 1.5rem;">
+                <div class="insight-header">
+                    <span>💡 Insight of the Day</span>
+                </div>
+                <p id="dailyInsight" class="text-sm">Click "Quick Log" or start a timer to generate your first insight!</p>
+            </div>
+
+            <!-- Mentor Nudge -->
+            <div class="card nudge-card hidden" id="mentorNudge">
+                <div class="nudge-header">
+                    <div class="nudge-icon">💬</div>
+                    <span class="font-bold text-gray-700">Growth Opportunity</span>
+                </div>
+                <p class="text-sm" id="mentorNudgeText" style="margin-bottom: 1rem;">
+                    Your research trajectory is at 62% with 15 weeks remaining.
+                </p>
+                <button class="btn btn-secondary" style="width: 100%; font-size: 0.875rem;" onclick="app.dismissNudge()">
+                    Remind Me Later
+                </button>
+            </div>
+        </aside>
+
+        <!-- Right Column: Trajectory & Week View -->
+        <section>
+            <!-- Trajectory Grid -->
+            <div class="trajectory-grid">
+                <!-- Clinical Progress -->
+                <div class="card progress-ring-container">
+                    <div class="flex justify-between mb-2">
+                        <span class="font-bold" style="color: var(--clinical);">🩺 Clinical Practice</span>
+                        <span class="text-sm font-bold" id="clinicalProgressText">0%</span>
+                    </div>
+                    <svg class="progress-ring" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                        <circle id="clinicalProgressRing" cx="50" cy="50" r="45" fill="none" 
+                                stroke="var(--clinical)" stroke-width="8" 
+                                stroke-dasharray="283" stroke-dashoffset="283"
+                                transform="rotate(-90 50 50)"/>
+                    </svg>
+                    <div class="text-sm text-gray-500">Yearly Goal</div>
+                </div>
+
+                <!-- Research Progress -->
+                <div class="card progress-ring-container">
+                    <div class="flex justify-between mb-2">
+                        <span class="font-bold" style="color: var(--research);">🔬 Research & Scholarship</span>
+                        <span class="text-sm font-bold" id="researchProgressText">0%</span>
+                    </div>
+                    <svg class="progress-ring" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                        <circle id="researchProgressRing" cx="50" cy="50" r="45" fill="none" 
+                                stroke="var(--research)" stroke-width="8" 
+                                stroke-dasharray="283" stroke-dashoffset="283"
+                                transform="rotate(-90 50 50)"/>
+                    </svg>
+                    <div class="text-sm text-gray-500">Yearly Goal</div>
+                </div>
+
+                <!-- Education Progress -->
+                <div class="card progress-ring-container">
+                    <div class="flex justify-between mb-2">
+                        <span class="font-bold" style="color: var(--education);">📚 Education & Teaching</span>
+                        <span class="text-sm font-bold" id="educationProgressText">0%</span>
+                    </div>
+                    <svg class="progress-ring" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                        <circle id="educationProgressRing" cx="50" cy="50" r="45" fill="none" 
+                                stroke="var(--education)" stroke-width="8" 
+                                stroke-dasharray="283" stroke-dashoffset="283"
+                                transform="rotate(-90 50 50)"/>
+                    </svg>
+                    <div class="text-sm text-gray-500">Yearly Goal</div>
+                </div>
+
+                <!-- Admin Progress -->
+                <div class="card progress-ring-container">
+                    <div class="flex justify-between mb-2">
+                        <span class="font-bold" style="color: var(--admin);">📋 Administration</span>
+                        <span class="text-sm font-bold" id="adminProgressText">0%</span>
+                    </div>
+                    <svg class="progress-ring" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                        <circle id="adminProgressRing" cx="50" cy="50" r="45" fill="none" 
+                                stroke="var(--admin)" stroke-width="8" 
+                                stroke-dasharray="283" stroke-dashoffset="283"
+                                transform="rotate(-90 50 50)"/>
+                    </svg>
+                    <div class="text-sm text-gray-500">Yearly Goal</div>
+                </div>
+            </div>
+
+            <!-- Weekly View -->
+            <div class="week-view" style="margin-top: 2rem;">
+                <h2 class="card-title mb-2">📅 Week of <span id="currentWeekLabel"></span></h2>
+                
+                <div class="day-grid" id="dayGrid">
+                    <!-- Days rendered here -->
+                </div>
+
+                <!-- Day Summary -->
+                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--gray-100);">
+                    <h3 class="text-sm font-bold mb-2">Today's Summary</h3>
+                    <div id="todaySummary" class="text-sm text-gray-500">
+                        No sessions logged yet today. Start your first timer!
+                    </div>
+                </div>
+
+                <!-- Recommendations -->
+                <div style="margin-top: 1rem; padding: 1rem; background: #f0fdf4; border-radius: 8px;">
+                    <h3 class="text-sm font-bold mb-1">💡 Quick Recommendation</h3>
+                    <p id="quickRecommendation" class="text-sm text-gray-600">
+                        Log your first session to see personalized recommendations!
+                    </p>
+                </div>
+            </div>
+
+            <!-- Analytics Section -->
+            <div class="card" style="margin-top: 2rem;">
+                <h2 class="card-title mb-3">📊 Weekly Breakdown</h2>
+                <canvas id="analyticsChart" width="500" height="200"></canvas>
+            </div>
+        </section>
+    </main>
+
+    <!-- Day Detail Modal -->
+    <div class="modal-overlay" id="dayModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="font-bold" id="modalDayTitle">Monday, January 15</h3>
+                <button class="modal-close" onclick="app.closeDayModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h4 class="text-sm font-bold mb-2 text-gray-600">Sessions Today</h4>
+                
+                <div id="daySessionList">
+                    <!-- Sessions rendered here -->
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;" onclick="app.addSessionToDay()">
+                    + Add Session
+                </button>
+
+                <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--gray-200);">
+                
+                <h4 class="text-sm font-bold mb-2 text-gray-600">📊 Gap Analysis</h4>
+                <div id="gapAnalysis"></div>
+            </div>
+        </div>
     </div>
 
-    <div class="statusbar">
-      <div class="statusbox">
-        <div class="label">State</div>
-        <div id="stateDisplay">OFF</div>
-      </div>
-      <div class="statusbox">
-        <div class="label">Mode</div>
-        <div id="modeDisplay">—</div>
-      </div>
-      <div class="statusbox">
-        <div class="label">Location</div>
-        <div id="locationDisplay">—</div>
-      </div>
-      <div class="statusbox">
-        <div class="label">Score</div>
-        <div id="scoreDisplay">10000</div>
-      </div>
+    <!-- Category Modal -->
+    <div class="modal-overlay" id="categoryModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="font-bold">Add New Category</h3>
+                <button class="modal-close" onclick="app.closeCategoryModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="categoryForm" onsubmit="app.saveCategory(event)">
+                    <div style="margin-bottom: 1rem;">
+                        <label class="text-sm font-bold text-gray-600 mb-1 block">Category Name</label>
+                        <input type="text" name="name" required class="form-input" placeholder="e.g., Patient Care, Writing Committee Work">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label class="text-sm font-bold text-gray-600 mb-1 block">Annual Target Hours</label>
+                        <input type="number" name="target" required class="form-input" placeholder="e.g., 500">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label class="text-sm font-bold text-gray-600 mb-1 block">Color</label>
+                        <select name="color" class="form-select" id="categoryColorSelect">
+                            <option value="#4CAF50">Green (Clinical)</option>
+                            <option value="#FF9800">Orange (Research)</option>
+                            <option value="#2196F3">Blue (Education)</option>
+                            <option value="#9C27B0">Purple (Admin)</option>
+                            <option value="#EF4444">Red (Other)</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="app.closeCategoryModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Category</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
-    <div class="output" id="output"></div>
-
-    <div class="inputrow">
-      <div class="prompt" id="prompt">SYS></div>
-      <input id="commandInput" type="text" autocomplete="off" spellcheck="false" />
-      <div class="controls">
-        <button id="powerBtn" type="button">POWER</button>
-        <button id="clearBtn" type="button">CLEAR</button>
-      </div>
+    <!-- Target Modal -->
+    <div class="modal-overlay" id="targetModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="font-bold">Set Year-End Targets</h3>
+                <button class="modal-close" onclick="app.closeTargetModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="targetForm" onsubmit="app.saveTargets(event)">
+                    <div style="margin-bottom: 1rem;">
+                        <label class="text-sm font-bold text-gray-600 mb-1 block">Clinical Hours</label>
+                        <input type="number" name="clinical" required class="form-input" placeholder="e.g., 1000">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label class="text-sm font-bold text-gray-600 mb-1 block">Research Hours</label>
+                        <input type="number" name="research" required class="form-input" placeholder="e.g., 200">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label class="text-sm font-bold text-gray-600 mb-1 block">Education Hours</label>
+                        <input type="number" name="education" required class="form-input" placeholder="e.g., 300">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label class="text-sm font-bold text-gray-600 mb-1 block">Admin Hours</label>
+                        <input type="number" name="admin" required class="form-input" placeholder="e.g., 400">
+                    </div>
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="app.closeTargetModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Targets</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <script>
-    (() => {
-      const SAVE_KEY = 'titan_derelict_protocol_save_v3';
-      const outputDiv = document.getElementById('output');
-      const inputField = document.getElementById('commandInput');
-      const promptSpan = document.getElementById('prompt');
-      const stateDisplay = document.getElementById('stateDisplay');
-      const modeDisplay = document.getElementById('modeDisplay');
-      const locationDisplay = document.getElementById('locationDisplay');
-      const scoreDisplay = document.getElementById('scoreDisplay');
-      const powerBtn = document.getElementById('powerBtn');
-      const clearBtn = document.getElementById('clearBtn');
-      const terminal = document.getElementById('terminal');
+    <!-- Quick Log Modal -->
+    <div class="modal-overlay" id="quickLogModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="font-bold">Quick Time Entry</h3>
+                <button class="modal-close" onclick="app.closeQuickLogModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="quickLogForm" onsubmit="app.saveQuickLog(event)">
+                    <input type="hidden" name="date" value="">
+                    <div style="margin-bottom: 1rem;">
+                        <label class="text-sm font-bold text-gray-600 mb-1 block">Category</label>
+                        <select name="category" required id="quickLogCategory" class="form-select"></select>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label class="text-sm font-bold text-gray-600 mb-1 block">Hours</label>
+                        <input type="number" name="hours" step="0.25" required class="form-input" placeholder="e.g., 4.5">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label class="text-sm font-bold text-gray-600 mb-1 block">Notes (optional)</label>
+                        <input type="text" name="notes" class="form-input" placeholder="e.g., Morning clinic, journal writing">
+                    </div>
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="app.closeQuickLogModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Entry</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
-      let isTyping = false;
-      let idleTimer = null;
-      let sarcasmIndex = 0;
+    <!-- JavaScript Application -->
+    <script>
+        class FacultyTimeCompass {
+            constructor() {
+                this.state = {
+                    timer: { active: false, startTime: null, elapsed: 0, category: null },
+                    categories: [],
+                    targets: {},
+                    logs: {}, // date -> array of entries
+                    insights: []
+                };
 
-      const sarcasmLines = [
-        'TITAN: "You freeze often, or only when the pressure matters?"',
-        'TITAN: "Excellent. We are both standing still now. A tactical masterclass."',
-        'TITAN: "Take your time. The ship has only been dying for a while."',
-        'TITAN: "If this is deep strategy, it looks a lot like hesitation."',
-        'TITAN: "I could insult you faster, but apparently we are pacing ourselves."'
-      ];
-
-      const directions = {
-        N: 'NORTH',
-        S: 'SOUTH',
-        E: 'EAST',
-        W: 'WEST'
-      };
-
-      const rooms = {
-        CRYO_BAY: {
-          name: 'CRYO BAY',
-          exits: { NORTH: 'HALLWAY' },
-          describe(game) {
-            const parts = [
-              'You stand in a dim cryo bay. Frost clings to shattered pod glass. One contractor lies motionless beside a maintenance locker.'
-            ];
-            if (!game.flags.bodySearched) parts.push('The body has not been searched.');
-            if (!game.flags.lockerOpened) parts.push('A locker on the wall is half-jammed but still accessible.');
-            parts.push('A corridor leads NORTH.');
-            if (game.easyMode) {
-              parts.push('TRAINING HINT: SEARCH BODY for credentials. OPEN LOCKER for equipment.');
+                this.init();
             }
-            return parts.join(' ');
-          }
-        },
-        HALLWAY: {
-          name: 'MAIN HALLWAY',
-          exits: { SOUTH: 'CRYO_BAY', WEST: 'POWER_CORE', EAST: 'MED_BAY', NORTH: 'SECURITY_OFFICE' },
-          describe(game) {
-            const parts = [
-              'A flickering main hallway branches in three directions. Alarm strips pulse beneath a film of dust.'
-            ];
-            parts.push('SOUTH returns to the cryo bay. WEST leads to the power core. EAST leads to med bay. NORTH leads to the security office.');
-            if (!game.inventory.includes('KEYCARD')) {
-              parts.push('The security office likely expects a keycard.');
-            }
-            if (game.easyMode) {
-              parts.push('TRAINING HINT: SECURITY first for authorization, POWER CORE second for stabilization.');
-            }
-            return parts.join(' ');
-          }
-        },
-        MED_BAY: {
-          name: 'MED BAY',
-          exits: { WEST: 'HALLWAY' },
-          describe(game) {
-            const parts = [
-              'The med bay is overturned but intact enough to be useful. Cabinets hang open. A cracked diagnostic screen loops an error tone.'
-            ];
-            if (!game.flags.medkitTaken) parts.push('A sealed trauma patch sits in an emergency cradle.');
-            parts.push('WEST returns to the hallway.');
-            if (game.easyMode) parts.push('TRAINING HINT: TAKE PATCH. It is optional, but smart.');
-            return parts.join(' ');
-          }
-        },
-        POWER_CORE: {
-          name: 'POWER CORE',
-          exits: { EAST: 'HALLWAY' },
-          describe(game) {
-            const parts = [
-              'The power core roars behind thick shielding. A service panel near the reactor bus is scorched and partially unlatched.'
-            ];
-            if (!game.flags.panelOpened) {
-              parts.push('The service panel is still closed.');
-            } else if (!game.flags.fuseInstalled) {
-              parts.push('Inside the open panel: one empty fuse slot and a cluster of live contacts.');
-            } else if (!game.flags.reactorStabilized) {
-              parts.push('The spare fuse is seated, but the reactor still needs manual stabilization.');
-            } else {
-              parts.push('The reactor hum has dropped to a stable, survivable range.');
-            }
-            parts.push('EAST returns to the hallway.');
-            if (game.easyMode) {
-              parts.push('TRAINING HINT: OPEN PANEL, INSERT FUSE, then STABILIZE CORE. Gloves reduce penalties.');
-            }
-            return parts.join(' ');
-          }
-        },
-        SECURITY_OFFICE: {
-          name: 'SECURITY OFFICE',
-          exits: { SOUTH: 'HALLWAY', EAST: 'SHUTTLE_BAY' },
-          describe(game) {
-            const parts = [
-              'A cramped security office hums with partial backup power. One terminal still responds to touch.'
-            ];
-            if (!game.flags.securityAccessed) {
-              parts.push('The terminal is waiting for a local security access command.');
-            } else {
-              parts.push('The terminal now shows docking telemetry, a launch code, and a schematic of the shuttle locks.');
-            }
-            parts.push('SOUTH returns to the hallway. EAST leads to the shuttle bay.');
-            if (game.easyMode) parts.push('TRAINING HINT: ACCESS SECURITY here before attempting launch.');
-            return parts.join(' ');
-          }
-        },
-        SHUTTLE_BAY: {
-          name: 'SHUTTLE BAY',
-          exits: { WEST: 'SECURITY_OFFICE' },
-          describe(game) {
-            const parts = [
-              'A compact escape shuttle rests on mag clamps. The cockpit is dark, but the launch cradle still has standby power.'
-            ];
-            if (!game.flags.launchAuthorized) {
-              parts.push('The console requests a four-digit launch code.');
-            } else {
-              parts.push('The console displays LAUNCH READY, pending reactor safety verification.');
-            }
-            parts.push('WEST returns to the security office.');
-            if (game.easyMode) parts.push('TRAINING HINT: ENTER CODE ####, then LAUNCH after the reactor is stabilized.');
-            return parts.join(' ');
-          }
-        }
-      };
 
-      function createInitialGame() {
-        return {
-          state: 'OFF',
-          easyMode: false,
-          score: 10000,
-          commandCount: 0,
-          currentLocation: 'CRYO_BAY',
-          inventory: [],
-          flags: {
-            bodySearched: false,
-            lockerOpened: false,
-            medkitTaken: false,
-            panelOpened: false,
-            fuseInstalled: false,
-            reactorStabilized: false,
-            securityAccessed: false,
-            launchAuthorized: false,
-            tookShockPenalty: false,
-            usedPatch: false
-          },
-          launchCode: '7314',
-          gameOver: false,
-          victory: false
-        };
-      }
-
-      let game = createInitialGame();
-
-      function appendLine(text, css = 'system') {
-        const div = document.createElement('div');
-        div.className = `line ${css}`;
-        div.textContent = text;
-        outputDiv.appendChild(div);
-        outputDiv.scrollTop = outputDiv.scrollHeight;
-      }
-
-      function printText(text, speed = 0, callback = null, css = 'system') {
-        if (!speed || speed <= 0) {
-          String(text).split('\n').forEach(line => appendLine(line, css));
-          if (callback) callback();
-          return;
-        }
-
-        isTyping = true;
-        const lines = String(text).split('\n');
-        let lineIndex = 0;
-
-        function typeNextLine() {
-          if (lineIndex >= lines.length) {
-            isTyping = false;
-            if (callback) callback();
-            return;
-          }
-
-          const lineDiv = document.createElement('div');
-          lineDiv.className = `line ${css}`;
-          outputDiv.appendChild(lineDiv);
-          outputDiv.scrollTop = outputDiv.scrollHeight;
-
-          const line = lines[lineIndex];
-          let charIndex = 0;
-
-          function typeChar() {
-            if (charIndex < line.length) {
-              lineDiv.textContent += line[charIndex];
-              charIndex += 1;
-              outputDiv.scrollTop = outputDiv.scrollHeight;
-              setTimeout(typeChar, speed);
-            } else {
-              lineIndex += 1;
-              setTimeout(typeNextLine, speed * 2);
-            }
-          }
-
-          typeChar();
-        }
-
-        typeNextLine();
-      }
-
-      function updateStatusDisplay() {
-        stateDisplay.textContent = game.state;
-        modeDisplay.textContent = game.state === 'OFF'
-          ? '—'
-          : (game.easyMode ? 'TRAINING OP' : 'NORMAL OP');
-        locationDisplay.textContent = game.state === 'PLAYING' || game.state === 'BOOT' || game.state === 'VICTORY' || game.state === 'DEFEAT'
-          ? rooms[game.currentLocation].name
-          : '—';
-        scoreDisplay.textContent = game.score;
-        promptSpan.textContent = game.state === 'OFF' ? 'SYS>' : 'TITAN>';
-      }
-
-      function adjustScore(amount) {
-        game.score = Math.max(0, game.score + amount);
-        updateStatusDisplay();
-      }
-
-      function startIdleTimer() {
-        clearTimeout(idleTimer);
-        if (game.state !== 'PLAYING') return;
-
-        idleTimer = setTimeout(() => {
-          appendLine(sarcasmLines[sarcasmIndex % sarcasmLines.length], 'warning');
-          sarcasmIndex += 1;
-          startIdleTimer();
-        }, 10000);
-      }
-
-      function resetForNewRun(modeIsEasy) {
-        game = createInitialGame();
-        game.easyMode = !!modeIsEasy;
-        game.state = 'BOOT';
-        updateStatusDisplay();
-        saveGame();
-      }
-
-      function saveGame() {
-        try {
-          localStorage.setItem(SAVE_KEY, JSON.stringify(game));
-        } catch (err) {
-          appendLine('WARNING: Save failed. Browser storage may be disabled.', 'danger');
-        }
-      }
-
-      function loadGame() {
-        try {
-          const raw = localStorage.getItem(SAVE_KEY);
-          if (!raw) return false;
-          const parsed = JSON.parse(raw);
-          const fresh = createInitialGame();
-          game = {
-            ...fresh,
-            ...parsed,
-            flags: {
-              ...fresh.flags,
-              ...(parsed.flags || {})
-            },
-            inventory: Array.isArray(parsed.inventory) ? parsed.inventory : []
-          };
-          updateStatusDisplay();
-          return true;
-        } catch (err) {
-          appendLine('WARNING: Save data was corrupted. Starting fresh.', 'danger');
-          localStorage.removeItem(SAVE_KEY);
-          return false;
-        }
-      }
-
-      function deleteSave() {
-        localStorage.removeItem(SAVE_KEY);
-      }
-
-      function hasSave() {
-        return !!localStorage.getItem(SAVE_KEY);
-      }
-
-      function showBootMenu() {
-        game.state = 'DIFFICULTY_SELECT';
-        updateStatusDisplay();
-        const resumeLine = hasSave()
-          ? '[R] RESUME SAVED OP'
-          : '[R] RESUME SAVED OP (UNAVAILABLE)';
-        printText(
-          'SYSTEM AKTIVIERT. TERMINAL POWERED ON.\n' +
-          'BITTE CHOOSE YOUR PROTOCOL:\n' +
-          '[1] NORMAL OP (STANDARD)\n' +
-          '[2] TRAINING OP (ASSISTED)\n' +
-          `${resumeLine}\n` +
-          '[N] NEW GAME / WIPE OLD SAVE\n' +
-          'ENTER EINGABE:'
-        );
-        saveGame();
-      }
-
-      function processLook() {
-        printText(rooms[game.currentLocation].describe(game));
-      }
-
-      function showHelp() {
-        const lines = [
-          'COMMON COMMANDS:',
-          'LOOK, HELP, MAP, INVENTORY, SCORE, SAVE',
-          'GO NORTH / SOUTH / EAST / WEST (or N/S/E/W)',
-          'SEARCH BODY, OPEN LOCKER, TAKE PATCH',
-          'ACCESS SECURITY, OPEN PANEL, INSERT FUSE, STABILIZE CORE',
-          'ENTER CODE 7314, LAUNCH',
-          'RESTART, RESUME'
-        ];
-        printText(lines.join('\n'));
-      }
-
-      function showMap() {
-        printText(
-          'SHIP MAP:\n' +
-          '          [SECURITY OFFICE] -- EAST -- [SHUTTLE BAY]\n' +
-          '                  |\n' +
-          '                SOUTH\n' +
-          '                  |\n' +
-          '[POWER CORE] -- WEST [HALLWAY] EAST -- [MED BAY]\n' +
-          '                  |\n' +
-          '                SOUTH\n' +
-          '                  |\n' +
-          '              [CRYO BAY]'
-        );
-      }
-
-      function showInventory() {
-        if (!game.inventory.length) {
-          printText('Inventory empty.');
-          return;
-        }
-        printText(`Inventory: ${game.inventory.join(', ')}`);
-      }
-
-      function normalizeCommand(rawCmd) {
-        return String(rawCmd ?? '')
-          .trim()
-          .toUpperCase()
-          .replace(/\s+/g, ' ');
-      }
-
-      function move(direction) {
-        const room = rooms[game.currentLocation];
-        const target = room.exits[direction];
-
-        if (!target) {
-          printText('No path in that direction.');
-          adjustScore(-10);
-          return;
-        }
-
-        if (game.currentLocation === 'HALLWAY' && direction === 'NORTH' && !game.inventory.includes('KEYCARD')) {
-          printText('The security door flashes ACCESS DENIED. You need a keycard.');
-          adjustScore(-15);
-          return;
-        }
-
-        if (game.currentLocation === 'SECURITY_OFFICE' && direction === 'EAST' && !game.flags.securityAccessed) {
-          printText('The shuttle bay lockout is still active. Access the security terminal first.');
-          adjustScore(-10);
-          return;
-        }
-
-        game.currentLocation = target;
-        updateStatusDisplay();
-        saveGame();
-        processLook();
-      }
-
-      function addItem(item) {
-        if (!game.inventory.includes(item)) game.inventory.push(item);
-      }
-
-      function usePatch() {
-        if (!game.inventory.includes('TRAUMA PATCH')) {
-          printText('You do not have a trauma patch.');
-          return;
-        }
-        if (!game.flags.tookShockPenalty) {
-          printText('You are not injured enough to justify wasting it. Yet.');
-          return;
-        }
-        if (game.flags.usedPatch) {
-          printText('You already used the trauma patch.');
-          return;
-        }
-        game.flags.usedPatch = true;
-        game.inventory = game.inventory.filter(item => item !== 'TRAUMA PATCH');
-        adjustScore(40);
-        printText('You slap the trauma patch onto your burned hand. Pain subsides. Functionality restored.');
-      }
-
-      function processLocationAction(cmd) {
-        switch (game.currentLocation) {
-          case 'CRYO_BAY':
-            if (cmd === 'SEARCH BODY' || cmd === 'LOOT BODY' || cmd === 'CHECK BODY') {
-              if (game.flags.bodySearched) {
-                printText('You already searched the body. Nothing else useful remains.');
-                return true;
-              }
-              game.flags.bodySearched = true;
-              addItem('KEYCARD');
-              adjustScore(125);
-              printText('You recover a SECURITY KEYCARD from the contractor\'s jacket. Good. The dead finally contributed.');
-              return true;
-            }
-            if (cmd === 'OPEN LOCKER' || cmd === 'SEARCH LOCKER') {
-              if (game.flags.lockerOpened) {
-                printText('The locker is already open and empty.');
-                return true;
-              }
-              game.flags.lockerOpened = true;
-              addItem('SPARE FUSE');
-              addItem('INSULATED GLOVES');
-              adjustScore(125);
-              printText('Inside the locker: SPARE FUSE and INSULATED GLOVES. Someone almost survived today.');
-              return true;
-            }
-            return false;
-
-          case 'MED_BAY':
-            if (cmd === 'TAKE PATCH' || cmd === 'TAKE TRAUMA PATCH' || cmd === 'SEARCH CABINET' || cmd === 'OPEN CABINET') {
-              if (game.flags.medkitTaken) {
-                printText('The emergency cradle is empty.');
-                return true;
-              }
-              game.flags.medkitTaken = true;
-              addItem('TRAUMA PATCH');
-              adjustScore(75);
-              printText('You take the TRAUMA PATCH and pocket it.');
-              return true;
-            }
-            return false;
-
-          case 'POWER_CORE':
-            if (cmd === 'OPEN PANEL' || cmd === 'PRY PANEL' || cmd === 'ACCESS PANEL') {
-              if (game.flags.panelOpened) {
-                printText('The service panel is already open.');
-                return true;
-              }
-              game.flags.panelOpened = true;
-              adjustScore(75);
-              printText('You wrench the panel open. Inside: a burned-out fuse slot and live contacts spitting faint blue arcs.');
-              return true;
-            }
-            if (cmd === 'INSERT FUSE' || cmd === 'USE FUSE' || cmd === 'INSTALL FUSE') {
-              if (!game.flags.panelOpened) {
-                printText('You need to OPEN PANEL first.');
-                return true;
-              }
-              if (game.flags.fuseInstalled) {
-                printText('The spare fuse is already installed.');
-                return true;
-              }
-              if (!game.inventory.includes('SPARE FUSE')) {
-                printText('You do not have a spare fuse.');
-                return true;
-              }
-
-              game.inventory = game.inventory.filter(item => item !== 'SPARE FUSE');
-              game.flags.fuseInstalled = true;
-
-              if (!game.inventory.includes('INSULATED GLOVES') && !game.flags.tookShockPenalty) {
-                game.flags.tookShockPenalty = true;
-                adjustScore(-60);
-                printText('You force the fuse into place bare-handed. Arc flash burns your palm, but the fuse seats correctly.');
-              } else {
-                adjustScore(125);
-                printText('Using the insulated gloves, you slot the SPARE FUSE into place without incident.');
-              }
-              return true;
-            }
-            if (cmd === 'STABILIZE CORE' || cmd === 'REROUTE POWER' || cmd === 'STABILIZE REACTOR') {
-              if (!game.flags.panelOpened) {
-                printText('You need access to the service panel first.');
-                return true;
-              }
-              if (!game.flags.fuseInstalled) {
-                printText('The core cannot stabilize without a replacement fuse.');
-                return true;
-              }
-              if (game.flags.reactorStabilized) {
-                printText('The core is already stable.');
-                return true;
-              }
-              game.flags.reactorStabilized = true;
-              adjustScore(250);
-              printText('You hold the bypass controls through a violent power shudder. Then the reactor tone settles. Core stabilized.');
-              return true;
-            }
-            return false;
-
-          case 'SECURITY_OFFICE':
-            if (cmd === 'ACCESS SECURITY' || cmd === 'USE TERMINAL' || cmd === 'LOGIN' || cmd === 'OPEN TERMINAL') {
-              if (game.flags.securityAccessed) {
-                printText(`Terminal already accessed. Launch code remains ${game.launchCode}. Shuttle bay unlocked.`);
-                return true;
-              }
-              game.flags.securityAccessed = true;
-              adjustScore(200);
-              printText(
-                'SECURITY TERMINAL ONLINE.\n' +
-                'DOCK 2 ESCAPE SHUTTLE: AVAILABLE\n' +
-                `LAUNCH AUTHORIZATION CODE: ${game.launchCode}\n` +
-                'SHUTTLE BAY LOCKOUT: DISENGAGED'
-              );
-              return true;
-            }
-            return false;
-
-          case 'SHUTTLE_BAY':
-            if (cmd.startsWith('ENTER CODE ')) {
-              const entered = cmd.replace('ENTER CODE ', '').trim();
-              if (entered === game.launchCode) {
-                if (game.flags.launchAuthorized) {
-                  printText('Launch code already accepted.');
-                  return true;
+            init() {
+                this.loadData();
+                this.setupEventListeners();
+                this.renderAll();
+                
+                // Start timer tick if active
+                if (this.state.timer.active) {
+                    this.startTimerTick();
                 }
-                game.flags.launchAuthorized = true;
-                adjustScore(150);
-                printText('Launch code accepted. Shuttle cradle now reads READY.');
-              } else {
-                adjustScore(-25);
-                printText('Incorrect code. The shuttle console emits a contemptuous beep.');
-              }
-              return true;
+
+                // Check for mentor nudge conditions
+                this.checkMentorNudge();
+
+                // Save data periodically
+                setInterval(() => this.saveData(), 30000);
             }
-            if (cmd === 'LAUNCH' || cmd === 'START SHUTTLE' || cmd === 'ENGAGE LAUNCH') {
-              if (!game.flags.launchAuthorized) {
-                printText('Launch denied. The console still requires a valid authorization code.');
-                return true;
-              }
-              if (!game.flags.reactorStabilized) {
-                adjustScore(-40);
-                printText('Launch aborted. TITAN: "Spectacular. You almost launched from a failing cradle." Stabilize the reactor first.');
-                return true;
-              }
-              game.state = 'VICTORY';
-              game.gameOver = true;
-              game.victory = true;
-              adjustScore(500);
-              updateStatusDisplay();
-              deleteSave();
-              clearTimeout(idleTimer);
-              printText(
-                'Mag clamps release. The shuttle punches out of the bay as the derelict fades behind you.\n' +
-                'TITAN: "You lived. Irritatingly impressive."\n' +
-                `FINAL SCORE: ${game.score}\n` +
-                'Type POWER to run again.'
-              );
-              return true;
+
+            loadData() {
+                const saved = localStorage.getItem('facultyTimeCompass');
+                if (saved) {
+                    this.state = JSON.parse(saved);
+                } else {
+                    // Initialize with default categories and targets
+                    this.initializeDefaultState();
+                }
             }
-            return false;
 
-          default:
-            return false;
+            initializeDefaultState() {
+                this.state.categories = [
+                    { id: 'clinical', name: 'Clinical Practice', target: 1000, color: '#4CAF50' },
+                    { id: 'research', name: 'Research & Scholarship', target: 200, color: '#FF9800' },
+                    { id: 'education', name: 'Education & Teaching', target: 300, color: '#2196F3' },
+                    { id: 'admin', name: 'Administration', target: 400, color: '#9C27B0' }
+                ];
+
+                this.state.targets = {
+                    clinical: 1000,
+                    research: 200,
+                    education: 300,
+                    admin: 400
+                };
+
+                this.saveData();
+            }
+
+            saveData() {
+                localStorage.setItem('facultyTimeCompass', JSON.stringify(this.state));
+            }
+
+            setupEventListeners() {
+                // Handle visibility change to pause timer notification
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden && this.state.timer.active) {
+                        console.log('Page hidden, timer continuing in background');
+                    }
+                });
+
+                // Handle page unload - try to save final state
+                window.addEventListener('beforeunload', () => {
+                    if (this.state.timer.active) {
+                        const duration = Math.floor((Date.now() - this.state.timer.startTime + this.state.timer.elapsed * 1000) / 60000);
+                        console.log(`Timer active: ${duration} minutes`);
+                    }
+                });
+            }
+
+            // ==================== TIMER FUNCTIONS ====================
+
+            toggleTimer() {
+                if (this.state.timer.active) {
+                    this.stopTimer();
+                } else {
+                    this.startTimer();
+                }
+            }
+
+            startTimer() {
+                const categorySelect = document.getElementById('quickLogCategory');
+                if (!categorySelect.value) {
+                    alert('Please select a category first!');
+                    return;
+                }
+
+                const selectedCategory = this.state.categories.find(c => c.id === categorySelect.value);
+                
+                this.state.timer = {
+                    active: true,
+                    startTime: Date.now(),
+                    elapsed: 0,
+                    category: selectedCategory.id
+                };
+
+                this.saveData();
+                this.startTimerTick();
+                this.renderAll();
+            }
+
+            startTimerTick() {
+                if (!this.state.timer.active) return;
+
+                const tick = () => {
+                    if (this.state.timer.active) {
+                        const now = Date.now();
+                        const elapsedMs = now - this.state.timer.startTime + this.state.timer.elapsed * 1000;
+                        this.state.timer.elapsed = Math.floor(elapsedMs / 1000);
+                        this.updateTimerDisplay();
+                    } else {
+                        return;
+                    }
+
+                    // Save every tick to ensure persistence
+                    if (Date.now() % 60000 < 1000) { // Every minute-ish
+                        this.saveData();
+                    }
+                };
+
+                tick();
+                setInterval(tick, 1000);
+            }
+
+            stopTimer() {
+                const durationMinutes = Math.floor((Date.now() - this.state.timer.startTime + this.state.timer.elapsed * 1000) / 60000);
+                
+                if (durationMinutes < 5) {
+                    // Too short, just abort
+                    this.state.timer.active = false;
+                    this.saveData();
+                    this.renderAll();
+                    return;
+                }
+
+                // Log the session
+                const dateStr = new Date().toISOString().split('T')[0];
+                
+                if (!this.state.logs[dateStr]) {
+                    this.state.logs[dateStr] = [];
+                }
+
+                this.state.logs[dateStr].push({
+                    id: Date.now(),
+                    category: this.state.timer.category,
+                    start_time: new Date(this.state.timer.startTime).toISOString(),
+                    duration_minutes: durationMinutes,
+                    type: 'timer'
+                });
+
+                // Reset timer
+                this.state.timer = { active: false, startTime: null, elapsed: 0, category: null };
+                
+                this.saveData();
+                this.renderAll();
+                this.checkMentorNudge();
+            }
+
+            updateTimerDisplay() {
+                const totalSeconds = this.state.timer.elapsed;
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+
+                document.getElementById('timerDisplay').textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                const statusDot = document.getElementById('statusDot');
+                const statusText = document.getElementById('timerStatusText');
+                const startBtn = document.getElementById('startTimerBtn');
+
+                if (this.state.timer.active) {
+                    statusDot.classList.add('active');
+                    statusText.textContent = 'Running';
+                    startBtn.innerHTML = '⏸ Pause Timer';
+                    startBtn.className = 'btn btn-danger';
+                } else {
+                    statusDot.classList.remove('active');
+                    statusText.textContent = 'Inactive';
+                    startBtn.innerHTML = '▶ Start Timer';
+                    startBtn.className = 'btn btn-primary';
+                }
+            }
+
+            // ==================== QUICK LOG FUNCTIONS ====================
+
+            addQuickLog() {
+                const categorySelect = document.getElementById('quickLogCategory');
+                categorySelect.innerHTML = '';
+                
+                this.state.categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.id;
+                    option.textContent = `${cat.name}`;
+                    categorySelect.appendChild(option);
+                });
+
+                // Set today's date
+                document.querySelector('[name="date"]').value = new Date().toISOString().split('T')[0];
+
+                document.getElementById('quickLogModal').classList.add('active');
+            }
+
+            saveQuickLog(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(e.target);
+                const dateStr = formData.get('date');
+                const category = formData.get('category');
+                const hours = parseFloat(formData.get('hours'));
+                const notes = formData.get('notes') || '';
+
+                if (!this.state.logs[dateStr]) {
+                    this.state.logs[dateStr] = [];
+                }
+
+                this.state.logs[dateStr].push({
+                    id: Date.now(),
+                    category,
+                    duration_minutes: hours * 60,
+                    notes,
+                    type: 'manual'
+                });
+
+                e.target.reset();
+                document.getElementById('quickLogModal').classList.remove('active');
+
+                this.saveData();
+                this.renderAll();
+                this.checkMentorNudge();
+            }
+
+            closeQuickLogModal() {
+                document.getElementById('quickLogModal').classList.remove('active');
+            }
+
+            // ==================== CATEGORY FUNCTIONS ====================
+
+            showCategoryModal() {
+                document.getElementById('categoryModal').classList.add('active');
+            }
+
+            closeCategoryModal() {
+                document.getElementById('categoryModal').classList.remove('active');
+            }
+
+            saveCategory(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(e.target);
+                
+                this.state.categories.push({
+                    id: 'custom_' + Date.now(),
+                    name: formData.get('name'),
+                    target: parseInt(formData.get('target')),
+                    color: formData.get('color')
+                });
+
+                e.target.reset();
+                document.getElementById('categoryModal').classList.remove('active');
+
+                this.saveData();
+                this.renderAll();
+            }
+
+            // ==================== TARGET FUNCTIONS ====================
+
+            showTargetModal() {
+                const targets = this.state.targets;
+                
+                document.querySelector('[name="clinical"]').value = targets.clinical || '';
+                document.querySelector('[name="research"]').value = targets.research || '';
+                document.querySelector('[name="education"]').value = targets.education || '';
+                document.querySelector('[name="admin"]').value = targets.admin || '';
+
+                document.getElementById('targetModal').classList.add('active');
+            }
+
+            closeTargetModal() {
+                document.getElementById('targetModal').classList.remove('active');
+            }
+
+            saveTargets(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(e.target);
+                
+                this.state.targets = {
+                    clinical: parseInt(formData.get('clinical')),
+                    research: parseInt(formData.get('research')),
+                    education: parseInt(formData.get('education')),
+                    admin: parseInt(formData.get('admin'))
+                };
+
+                e.target.reset();
+                document.getElementById('targetModal').classList.remove('active');
+
+                this.saveData();
+                this.renderAll();
+            }
+
+            // ==================== RENDERING FUNCTIONS ====================
+
+            renderAll() {
+                this.renderCategories();
+                this.updateTimerDisplay();
+                this.renderProgressRings();
+                this.renderWeekView();
+                this.renderTodaySummary();
+                this.generateInsight();
+                this.checkMentorNudge();
+                this.renderAnalytics();
+            }
+
+            renderCategories() {
+                const container = document.getElementById('categoryList');
+                container.innerHTML = '';
+
+                let totalProgress = 0;
+                let categoryCount = 0;
+
+                this.state.categories.forEach(cat => {
+                    const todayLogs = this.getTodayLogsByCategory(cat.id);
+                    const todayHours = todayLogs.reduce((sum, log) => sum + (log.duration_minutes / 60), 0);
+                    
+                    // Calculate year progress (simple approximation based on week of year)
+                    const now = new Date();
+                    const startOfYear = new Date(now.getFullYear(), 0, 1);
+                    const daysElapsed = Math.floor((now - startOfYear) / (1000 * 60 * 60 * 24));
+                    const progressPercent = Math.min(100, ((daysElapsed + todayHours * 7.3) / cat.target * 100).toFixed(1));
+
+                    totalProgress += parseFloat(progressPercent);
+                    categoryCount++;
+
+                    const item = document.createElement('div');
+                    item.className = `category-item ${this.state.timer.category === cat.id ? 'active' : ''}`;
+                    item.onclick = () => {
+                        if (!this.state.timer.active) {
+                            this.selectCategoryForTimer(cat.id);
+                        }
+                    };
+
+                    item.innerHTML = `
+                        <div class="category-header">
+                            <span class="category-name">${cat.name}</span>
+                            <span class="category-color" style="background: ${cat.color}"></span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${Math.min(100, progressPercent)}%; background: ${cat.color}"></div>
+                        </div>
+                        <div class="category-stats">
+                            <span>${todayHours.toFixed(1)} hrs today</span>
+                            <span>${progressPercent}% yearly</span>
+                        </div>
+                    `;
+
+                    container.appendChild(item);
+                });
+
+                // Update category dropdown for quick log and timer
+                const timerCategorySelect = document.getElementById('quickLogCategory');
+                if (timerCategorySelect) {
+                    timerCategorySelect.innerHTML = '';
+                    this.state.categories.forEach(cat => {
+                        const option = document.createElement('option');
+                        option.value = cat.id;
+                        option.textContent = `${cat.name}`;
+                        timerCategorySelect.appendChild(option);
+                    });
+                }
+
+                // Update average progress for insight
+                if (categoryCount > 0) {
+                    const avgProgress = (totalProgress / categoryCount).toFixed(1);
+                    document.getElementById('dailyInsight').textContent = 
+                        `You're averaging ${avgProgress}% of yearly targets across all categories. Keep it up!`;
+                }
+            }
+
+            selectCategoryForTimer(categoryId) {
+                if (!this.state.timer.active) {
+                    const categorySelect = document.getElementById('quickLogCategory');
+                    if (categorySelect) {
+                        categorySelect.value = categoryId;
+                    }
+                }
+            }
+
+            renderProgressRings() {
+                const categories = [
+                    { id: 'clinical', color: '#4CAF50' },
+                    { id: 'research', color: '#FF9800' },
+                    { id: 'education', color: '#2196F3' },
+                    { id: 'admin', color: '#9C27B0' }
+                ];
+
+                const now = new Date();
+                const startOfYear = new Date(now.getFullYear(), 0, 1);
+                const daysElapsed = Math.floor((now - startOfYear) / (1000 * 60 * 60 * 24));
+                const expectedPercent = daysElapsed / 365;
+
+                categories.forEach(cat => {
+                    const category = this.state.categories.find(c => c.id === cat.id);
+                    if (!category) return;
+
+                    const totalHoursLogged = this.getTotalHoursForCategory(cat.id);
+                    const target = this.state.targets[cat.id] || 0;
+                    
+                    // Adjust for days elapsed (expected progress by now)
+                    const expectedHours = target * expectedPercent;
+                    let progressPercent = (totalHoursLogged / target) * 100;
+
+                    if (!target) {
+                        progressPercent = 0;
+                    }
+
+                    progressPercent = Math.min(100, parseFloat(progressPercent.toFixed(1)));
+
+                    // Update text
+                    document.getElementById(`${cat.id}ProgressText`).textContent = `${progressPercent}%`;
+
+                    // Update ring (circumference = 2πr = 283 for r=45)
+                    const circumference = 2 * Math.PI * 45;
+                    const offset = circumference - (progressPercent / 100) * circumference;
+
+                    const circle = document.getElementById(`${cat.id}ProgressRing`);
+                    if (circle) {
+                        circle.style.strokeDasharray = circumference;
+                        circle.style.strokeDashoffset = offset;
+                        
+                        // Color code based on progress vs expected
+                        if (progressPercent < expectedPercent * 0.8) {
+                            circle.style.stroke = '#ef4444'; // Red - behind
+                        } else if (progressPercent > expectedPercent * 1.2) {
+                            circle.style.stroke = '#22c55e'; // Green - ahead
+                        }
+                    }
+                });
+            }
+
+            getTotalHoursForCategory(categoryId) {
+                let totalMinutes = 0;
+                
+                Object.values(this.state.logs).forEach(dateLogs => {
+                    dateLogs.forEach(log => {
+                        if (log.category === categoryId && log.duration_minutes) {
+                            totalMinutes += log.duration_minutes;
+                        }
+                    });
+                });
+
+                return totalMinutes / 60;
+            }
+
+            renderWeekView() {
+                const dayGrid = document.getElementById('dayGrid');
+                const weekLabel = document.getElementById('currentWeekLabel');
+                
+                const today = new Date();
+                const startOfWeek = this.getStartOfWeek(today);
+                weekLabel.textContent = startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                dayGrid.innerHTML = '';
+
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date(startOfWeek);
+                    date.setDate(date.getDate() + i);
+                    
+                    const dateStr = date.toISOString().split('T')[0];
+                    const isToday = date.toDateString() === today.toDateString();
+                    
+                    // Count logged hours for this day
+                    let totalHours = 0;
+                    if (this.state.logs[dateStr]) {
+                        totalHours = this.state.logs[dateStr].reduce((sum, log) => sum + (log.duration_minutes / 60), 0);
+                    }
+
+                    const hasLog = totalHours > 0;
+
+                    const dayCell = document.createElement('div');
+                    dayCell.className = `day-cell ${isToday ? 'today' : ''} ${hasLog ? 'has-log' : ''}`;
+                    
+                    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                    
+                    dayCell.innerHTML = `
+                        <div class="text-xs text-gray-400">${dayName}</div>
+                        <div class="day-number">${date.getDate()}</div>
+                        ${hasLog ? `<div class="day-hours">${totalHours.toFixed(1)}h</div>` : ''}
+                    `;
+
+                    if (isToday) {
+                        dayCell.onclick = () => this.openDayModal(dateStr);
+                    } else {
+                        dayCell.style.cursor = 'default';
+                    }
+
+                    dayGrid.appendChild(dayCell);
+                }
+            }
+
+            getStartOfWeek(date) {
+                const d = new Date(date);
+                const day = d.getDay();
+                const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+                return new Date(d.setDate(diff));
+            }
+
+            renderTodaySummary() {
+                const todayStr = new Date().toISOString().split('T')[0];
+                const summaryEl = document.getElementById('todaySummary');
+                
+                if (!this.state.logs[todayStr] || this.state.logs[todayStr].length === 0) {
+                    summaryEl.textContent = 'No sessions logged yet today. Start your first timer!';
+                    return;
+                }
+
+                let totalHours = 0;
+                const categoriesLogged = [];
+
+                this.state.logs[todayStr].forEach(log => {
+                    totalHours += log.duration_minutes / 60;
+                    const cat = this.state.categories.find(c => c.id === log.category);
+                    if (cat && !categoriesLogged.includes(cat.name)) {
+                        categoriesLogged.push(cat.name);
+                    }
+                });
+
+                summaryEl.innerHTML = `
+                    <strong>Total today:</strong> ${totalHours.toFixed(1)} hours<br>
+                    <strong>Categories logged:</strong> ${categoriesLogged.join(', ')}
+                `;
+            }
+
+            openDayModal(dateStr) {
+                const dateObj = new Date(dateStr);
+                document.getElementById('modalDayTitle').textContent = 
+                    dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+                const sessionList = document.getElementById('daySessionList');
+                const gapAnalysis = document.getElementById('gapAnalysis');
+                
+                sessionList.innerHTML = '';
+
+                const logsForDate = this.state.logs[dateStr] || [];
+                
+                if (logsForDate.length === 0) {
+                    sessionList.innerHTML = '<p class="text-sm text-gray-500">No sessions logged for this day.</p>';
+                } else {
+                    let categoryHours = {};
+                    
+                    logsForDate.forEach(log => {
+                        const catName = this.state.categories.find(c => c.id === log.category)?.name || 'Unknown';
+                        
+                        if (!categoryHours[log.category]) {
+                            categoryHours[log.category] = 0;
+                        }
+                        categoryHours[log.category] += log.duration_minutes / 60;
+
+                        const sessionDiv = document.createElement('div');
+                        sessionDiv.style.cssText = 'padding: 1rem; background: #f9fafb; border-radius: 8px; margin-bottom: 0.75rem;';
+                        
+                        sessionDiv.innerHTML = `
+                            <div class="flex justify-between">
+                                <span class="font-bold" style="color: ${this.getCategoryColor(log.category)}">${catName}</span>
+                                <span class="text-sm font-bold">${(log.duration_minutes / 60).toFixed(2)} hrs</span>
+                            </div>
+                            <p class="text-xs text-gray-500">Logged: ${new Date().toLocaleTimeString()}</p>
+                        `;
+
+                        sessionList.appendChild(sessionDiv);
+                    });
+
+                    // Gap analysis
+                    const now = new Date();
+                    const startOfYear = new Date(now.getFullYear(), 0, 1);
+                    const daysElapsed = Math.floor((now - startOfYear) / (1000 * 60 * 60 * 24));
+                    const expectedPercent = daysElapsed / 365;
+
+                    let gapHtml = '<div style="margin-top: 1rem;">';
+                    
+                    Object.entries(categoryHours).forEach(([catId, hours]) => {
+                        const target = this.state.targets[catId] || 0;
+                        if (target) {
+                            const expectedHours = target * expectedPercent;
+                            const isAhead = hours >= expectedHours;
+                            
+                            gapHtml += `
+                                <div style="margin-bottom: 0.5rem;">
+                                    ${isAhead ? '✓' : '⚠'} 
+                                    <span class="text-sm">${this.state.categories.find(c => c.id === catId)?.name}: </span>
+                                    <span class="text-xs">${hours.toFixed(1)} hrs logged (${isAhead ? '+' : ''}${Math.abs(hours - expectedHours).toFixed(1)} vs ${expectedHours.toFixed(1)} expected)</span>
+                                </div>
+                            `;
+                        }
+                    });
+
+                    gapHtml += '</div>';
+                    gapAnalysis.innerHTML = gapHtml;
+                }
+
+                document.getElementById('dayModal').classList.add('active');
+            }
+
+            closeDayModal() {
+                document.getElementById('dayModal').classList.remove('active');
+            }
+
+            getCategoryColor(categoryId) {
+                const cat = this.state.categories.find(c => c.id === categoryId);
+                return cat ? cat.color : '#6b7280';
+            }
+
+            // ==================== INSIGHT ENGINE ====================
+
+            generateInsight() {
+                const now = new Date();
+                const startOfYear = new Date(now.getFullYear(), 0, 1);
+                const daysElapsed = Math.floor((now - startOfYear) / (1000 * 60 * 60 * 24));
+                const expectedPercent = daysElapsed / 365;
+
+                let insights = [];
+                
+                this.state.categories.forEach(cat => {
+                    const totalHours = this.getTotalHoursForCategory(cat.id);
+                    const target = this.state.targets[cat.id] || 0;
+                    
+                    if (target) {
+                        const progressPercent = (totalHours / target) * 100;
+                        
+                        if (progressPercent < expectedPercent * 80) {
+                            insights.push(`Your ${cat.name} is behind at ${(progressPercent).toFixed(0)}% of yearly goal.`);
+                        } else if (progressPercent > expectedPercent * 120) {
+                            insights.push(`Great work on ${cat.name} - you're ${(progressPercent).toFixed(0)}% ahead!`);
+                        }
+                    }
+                });
+
+                // Check for patterns in logged hours by day of week (simplified)
+                if (this.state.logs['2024-01-15']) { // Placeholder logic
+                    insights.push('Tip: Log sessions earlier in the day to maintain better focus.');
+                }
+
+                document.getElementById('dailyInsight').textContent = 
+                    insights.length > 0 ? insights[0] : 'You\'re on track! Keep logging your progress.';
+            }
+
+            checkMentorNudge() {
+                const now = new Date();
+                const startOfYear = new Date(now.getFullYear(), 0, 1);
+                const daysElapsed = Math.floor((now - startOfYear) / (1000 * 60 * 60 * 24));
+                const weeksRemaining = Math.max(1, Math.ceil((365 - daysElapsed) / 7));
+
+                let needsNudge = false;
+                let nudgeMessage = '';
+
+                this.state.categories.forEach(cat => {
+                    const totalHours = this.getTotalHoursForCategory(cat.id);
+                    const target = this.state.targets[cat.id] || 0;
+                    
+                    if (target) {
+                        const expectedProgress = daysElapsed / 365;
+                        const actualProgress = totalHours / target;
+
+                        if (actualProgress < expectedProgress * 0.7 && weeksRemaining > 10) {
+                            needsNudge = true;
+                            nudgeMessage = `Your ${cat.name} is significantly behind trajectory. A mentor conversation could help recalibrate your approach.`;
+                        }
+                    }
+                });
+
+                const nudgeCard = document.getElementById('mentorNudge');
+                if (needsNudge) {
+                    nudgeCard.classList.remove('hidden');
+                    document.getElementById('mentorNudgeText').textContent = nudgeMessage;
+                } else {
+                    nudgeCard.classList.add('hidden');
+                }
+            }
+
+            dismissNudge() {
+                document.getElementById('mentorNudge').classList.add('hidden');
+            }
+
+            // ==================== ANALYTICS ====================
+
+            renderAnalytics() {
+                const ctx = document.getElementById('analyticsChart');
+                if (!ctx) return;
+
+                // Get this week's data
+                const startOfWeek = this.getStartOfWeek(new Date());
+                const weeklyData = [];
+
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date(startOfWeek);
+                    date.setDate(date.getDate() + i);
+                    const dateStr = date.toISOString().split('T')[0];
+
+                    let totalHours = 0;
+                    if (this.state.logs[dateStr]) {
+                        totalHours = this.state.logs[dateStr].reduce((sum, log) => sum + (log.duration_minutes / 60), 0);
+                    }
+
+                    weeklyData.push({ day: date.toLocaleDateString('en-US', { weekday: 'short' }), hours: totalHours });
+                }
+
+                // Draw simple bar chart
+                const maxHours = Math.max(1, ...weeklyData.map(d => d.hours));
+                
+                let html = '<svg width="500" height="200">';
+                
+                weeklyData.forEach((d, i) => {
+                    const x = 40 + (i * 70);
+                    const barHeight = (d.hours / maxHours) * 120;
+                    const y = 160 - barHeight;
+
+                    html += `
+                        <rect x="${x}" y="${y}" width="50" height="${barHeight}" fill="#4f46e5" rx="4"/>
+                        <text x="${x + 25}" y="185" text-anchor="middle" font-size="12">${d.day}</text>
+                    `;
+                });
+
+                html += '</svg>';
+                
+                // For now, just display the SVG HTML
+                const canvas = document.getElementById('analyticsChart');
+                if (canvas) {
+                    // In production, use a charting library like Chart.js
+                    canvas.parentElement.innerHTML = '<div style="text-align: center; padding: 2rem;">' + 
+                        'Weekly hours overview coming soon in the full version!</div>';
+                }
+            }
+
+            // ==================== UTILITY FUNCTIONS ====================
+
+            getTodayLogsByCategory(categoryId) {
+                const todayStr = new Date().toISOString().split('T')[0];
+                if (!this.state.logs[todayStr]) return [];
+                return this.state.logs[todayStr].filter(log => log.category === categoryId);
+            }
+
+            exportData() {
+                const dataStr = JSON.stringify(this.state, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `faculty-time-compass-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+
+                URL.revokeObjectURL(url);
+            }
+
+            resetData() {
+                if (confirm('Are you sure? This will delete all your logged data. This cannot be undone.')) {
+                    localStorage.removeItem('facultyTimeCompass');
+                    location.reload();
+                }
+            }
         }
-      }
 
-      function processCommand(cmd) {
-        if (!cmd) {
-          printText('Enter a command.');
-          return;
-        }
-
-        game.commandCount += 1;
-        adjustScore(-5);
-
-        if (cmd === 'HELP') {
-          showHelp();
-          saveGame();
-          return;
-        }
-
-        if (cmd === 'LOOK' || cmd === 'L') {
-          processLook();
-          saveGame();
-          return;
-        }
-
-        if (cmd === 'MAP') {
-          showMap();
-          saveGame();
-          return;
-        }
-
-        if (cmd === 'INVENTORY' || cmd === 'INV' || cmd === 'I') {
-          showInventory();
-          saveGame();
-          return;
-        }
-
-        if (cmd === 'SCORE') {
-          printText(`Current score: ${game.score}`);
-          saveGame();
-          return;
-        }
-
-        if (cmd === 'SAVE') {
-          saveGame();
-          printText('Progress saved.');
-          return;
-        }
-
-        if (cmd === 'USE PATCH' || cmd === 'APPLY PATCH') {
-          usePatch();
-          saveGame();
-          return;
-        }
-
-        if (cmd === 'RESUME') {
-          if (loadGame()) {
-            printText('Saved operation restored.');
-            updateStatusDisplay();
-            processLook();
-          } else {
-            printText('No saved operation found.');
-          }
-          return;
-        }
-
-        if (cmd === 'RESTART' || cmd === 'NEW GAME') {
-          deleteSave();
-          resetForNewRun(game.easyMode);
-          printText('CACHE WIPED. NEW GAME INITIALIZED.');
-          printText('TITAN: "Contractor 7342, you are awake. Try competence this time."', 12, () => {
-            game.state = 'PLAYING';
-            updateStatusDisplay();
-            processLook();
-            saveGame();
-            startIdleTimer();
-          });
-          return;
-        }
-
-        const movementMatch = cmd.match(/^(?:GO )?(NORTH|SOUTH|EAST|WEST|N|S|E|W)$/);
-        if (movementMatch) {
-          const rawDirection = movementMatch[1];
-          const direction = directions[rawDirection] || rawDirection;
-          move(direction);
-          saveGame();
-          return;
-        }
-
-        if (processLocationAction(cmd)) {
-          saveGame();
-          return;
-        }
-
-        adjustScore(-10);
-        printText('Command not recognized. Type HELP for valid options.');
-        saveGame();
-      }
-
-      function handleMenuInput(cmd) {
-        if (cmd === '1' || cmd === 'NORMAL' || cmd === 'NORMAL OP') {
-          resetForNewRun(false);
-          printText('TITAN: "Humanity test initializing... Contractor 7342, you\'re awake. Don\'t disappoint me."', 12, () => {
-            game.state = 'PLAYING';
-            updateStatusDisplay();
-            processLook();
-            saveGame();
-            startIdleTimer();
-          });
-          return;
-        }
-
-        if (cmd === '2' || cmd === 'TRAINING' || cmd === 'TRAINING OP') {
-          resetForNewRun(true);
-          printText('TITAN: "Training protocol engaged. I will help. Reluctantly."', 12, () => {
-            game.state = 'PLAYING';
-            updateStatusDisplay();
-            processLook();
-            saveGame();
-            startIdleTimer();
-          });
-          return;
-        }
-
-        if (cmd === 'R' || cmd === 'RESUME') {
-          if (!loadGame()) {
-            printText('No saved operation available.');
-            return;
-          }
-          if (game.state === 'OFF' || game.state === 'DIFFICULTY_SELECT') game.state = 'PLAYING';
-          updateStatusDisplay();
-          printText('CACHE RESTORED.');
-          processLook();
-          saveGame();
-          startIdleTimer();
-          return;
-        }
-
-        if (cmd === 'N' || cmd === 'NEW GAME') {
-          deleteSave();
-          printText('Old save wiped. Choose a protocol.');
-          return;
-        }
-
-        printText('INVALID CHOICE. ENTER 1, 2, R, OR N.');
-      }
-
-      function handleInput(rawCmd) {
-        if (isTyping) return;
-
-        const cmd = normalizeCommand(rawCmd);
-        appendLine(`> ${cmd || '[ENTER]'}`, 'player');
-        inputField.value = '';
-        inputField.focus();
-        startIdleTimer();
-
-        if (game.state === 'OFF') {
-          showBootMenu();
-          return;
-        }
-
-        if (game.state === 'DIFFICULTY_SELECT') {
-          handleMenuInput(cmd);
-          return;
-        }
-
-        if (game.state === 'BOOT') {
-          game.state = 'PLAYING';
-          updateStatusDisplay();
-          processCommand(cmd);
-          return;
-        }
-
-        if (game.state === 'PLAYING') {
-          processCommand(cmd);
-          return;
-        }
-
-        if (game.state === 'VICTORY' || game.state === 'DEFEAT') {
-          if (cmd === 'POWER' || cmd === 'RESTART' || cmd === 'NEW GAME') {
-            game = createInitialGame();
-            updateStatusDisplay();
-            showBootMenu();
-          } else {
-            printText('Operation complete. Type POWER to begin a new run.');
-          }
-        }
-      }
-
-      function bootScreen() {
-        appendLine('TITAN RELAY LINK // STANDBY', 'system');
-        appendLine('Type anything or press POWER to initialize.', 'muted');
-        updateStatusDisplay();
-      }
-
-      inputField.addEventListener('keydown', event => {
-        if (event.key === 'Enter') handleInput(inputField.value);
-      });
-
-      powerBtn.addEventListener('click', () => handleInput('POWER'));
-      clearBtn.addEventListener('click', () => {
-        outputDiv.innerHTML = '';
-        appendLine('DISPLAY CLEARED.', 'muted');
-      });
-
-      terminal.addEventListener('click', () => inputField.focus());
-      window.addEventListener('beforeunload', saveGame);
-
-      bootScreen();
-      inputField.focus();
-    })();
-  </script>
+        // Initialize the app when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            window.app = new FacultyTimeCompass();
+        });
+    </script>
 </body>
 </html>
