@@ -1,1551 +1,274 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AdvisorFlow - 80s Broker Dashboard</title>
-  
-  <!-- VT323 Google Font for authentic terminal feel -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-
-  <style>
-    /* === CRT AUTHENTICITY & COLOR PALETTE === */
-    :root {
-      --amber-primary: #ffb000;
-      --amber-glow: rgba(255, 176, 0, 0.4);
-      --amber-dim: #cc8c00;
-      --bg-black: #0a0a03;
-      --bg-dark: #111105;
-      --scan-line: rgba(255, 176, 0, 0.04);
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      background: var(--bg-black);
-      color: var(--amber-primary);
-      font-family: 'VT323', monospace, 'Courier New', monospace;
-      font-size: 18px;
-      min-height: 100vh;
-      position: relative;
-      overflow-x: hidden;
-    }
-
-    /* === PHOSPHOR GLOW TEXT EFFECT === */
-    .glow { text-shadow: 0 0 5px var(--amber-glow), 0 0 10px var(--amber-glow); }
-
-    /* === CRT SCAN LINES OVERLAY === */
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: repeating-linear-gradient(
-        to bottom,
-        transparent 0px,
-        transparent 2px,
-        var(--scan-line) 3px,
-        transparent 4px
-      );
-      pointer-events: none;
-      z-index: 9999;
-    }
-
-    /* === SCREEN CURVATURE VIGNETTE === */
-    body::after {
-      content: '';
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.6) 95%);
-      pointer-events: none;
-      z-index: 9998;
-    }
-
-    /* === SCROLLING TICKER BAR === */
-    .ticker-bar {
-      background: var(--bg-dark);
-      border-bottom: 2px solid var(--amber-primary);
-      overflow: hidden;
-      white-space: nowrap;
-      padding: 8px 0;
-      position: relative;
-      z-index: 100;
-    }
-
-    .ticker-track {
-      display: inline-block;
-      animation: scroll-left 25s linear infinite;
-    }
-
-    @keyframes scroll-left {
-      from { transform: translateX(100%); }
-      to { transform: translateX(-100%); }
-    }
-
-    .ticker-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 20px;
-      padding: 0 30px;
-      font-size: 20px;
-    }
-
-    .ticker-label { color: var(--amber-dim); text-transform: uppercase; letter-spacing: 2px; }
-    .ticker-value { font-weight: bold; }
-    .ticker-value.negative { color: #ff4444; text-shadow: 0 0 5px rgba(255,68,68,0.4); }
-    
-    /* === MAIN DASHBOARD CONTAINER === */
-    .dashboard {
-      max-width: 1000px;
-      margin: 20px auto;
-      padding: 20px;
-      position: relative;
-      z-index: 50;
-    }
-
-    /* === CRT MONITOR BORDER EFFECT === */
-    .dashboard::before {
-      content: '';
-      position: absolute;
-      top: -15px; left: -15px; right: -15px; bottom: -15px;
-      border: 3px solid var(--amber-dim);
-      border-radius: 20px;
-      pointer-events: none;
-    }
-
-    /* === DASHBOARD PANELS === */
-    .panels {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 15px;
-      margin-bottom: 25px;
-    }
-
-    @media (max-width: 768px) {
-      .panels { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    .panel {
-      background: var(--bg-dark);
-      border: 2px solid var(--amber-dim);
-      padding: 15px;
-      text-align: center;
-      position: relative;
-    }
-
-    .panel::before {
-      content: '';
-      position: absolute;
-      top: -3px; left: -3px; right: -3px; bottom: -3px;
-      border: 1px solid rgba(255, 176, 0, 0.2);
-      pointer-events: none;
-    }
-
-    .panel-title { 
-      font-size: 14px; color: var(--amber-dim); margin-bottom: 8px; 
-      letter-spacing: 2px; text-transform: uppercase;
-    }
-
-    .panel-value { 
-      font-size: 36px; line-height: 1.1; 
-    }
-
-    @media (max-width: 768px) {
-      .panel-value { font-size: 28px; }
-    }
-
-    /* === MAIN CONTENT GRID === */
-    .main-grid {
-      display: grid;
-      grid-template-columns: 1fr 300px;
-      gap: 20px;
-    }
-
-    @media (max-width: 768px) {
-      .main-grid { grid-template-columns: 1fr; }
-    }
-
-    /* === DAILY LOG PANEL === */
-    .daily-log-panel {
-      background: var(--bg-dark);
-      border: 2px solid var(--amber-dim);
-      padding: 20px;
-    }
-
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--amber-dim);
-    }
-
-    .panel-title-lg { font-size: 24px; letter-spacing: 3px; }
-
-    /* === CALL ENTRY === */
-    .call-entry {
-      background: rgba(255, 176, 0, 0.03);
-      border-left: 4px solid var(--amber-primary);
-      padding: 12px;
-      margin-bottom: 10px;
-    }
-
-    .call-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 16px;
-      margin-bottom: 8px;
-    }
-
-    .call-meta { font-size: 14px; color: var(--amber-dim); margin-bottom: 5px; }
-    
-    .call-note { 
-      font-style: italic; font-size: 14px; 
-      padding-top: 8px; border-top: 1px dashed var(--amber-dim); margin-top: 8px; color: #e0c070;
-    }
-
-    /* === EDITABLE METRICS === */
-    .metrics-edit {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px dotted var(--amber-dim);
-    }
-
-    @media (max-width: 480px) {
-      .metrics-edit { grid-template-columns: 1fr; }
-    }
-
-    .metric-field { display: flex; align-items: center; gap: 6px; font-size: 13px; }
-    .metric-label { color: var(--amber-dim); width: 70px; }
-    
-    .metric-input {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--amber-dim);
-      color: var(--amber-primary);
-      font-family: 'VT323', monospace;
-      font-size: 14px;
-      padding: 4px 8px;
-      width: 100%;
-    }
-
-    .metric-input:focus { outline: none; border-color: var(--amber-primary); box-shadow: 0 0 5px rgba(255, 176, 0, 0.3); }
-
-    /* === WEEKLY SUMMARY GRID === */
-    .weekly-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-      gap: 10px;
-      margin-top: 20px;
-      padding-top: 15px;
-      border-top: 1px solid var(--amber-dim);
-    }
-
-    .day-card {
-      background: rgba(255, 176, 0, 0.03);
-      border: 1px solid var(--amber-dim);
-      padding: 10px;
-      text-align: center;
-      position: relative;
-    }
-
-    .day-name { font-size: 14px; color: var(--amber-dim); margin-bottom: 5px; }
-    
-    .day-value { 
-      font-size: 28px; font-weight: bold; margin-bottom: 3px; 
-    }
-
-    .day-best {
-      position: absolute; top: -10px; right: 5px;
-      background: var(--amber-primary); color: var(--bg-black);
-      font-size: 10px; padding: 2px 6px; letter-spacing: 1px;
-    }
-
-    /* === TIMER BUTTON (Main Dashboard) === */
-    .timer-trigger {
-      position: fixed;
-      bottom: 30px; right: 30px;
-      background: var(--bg-dark);
-      border: 3px solid var(--amber-primary);
-      color: var(--amber-primary);
-      font-family: 'VT323', monospace;
-      font-size: 28px;
-      padding: 15px 25px;
-      cursor: pointer;
-      z-index: 200;
-      transition: all 0.2s ease;
-      box-shadow: 0 0 15px rgba(255, 176, 0, 0.3);
-    }
-
-    .timer-trigger:hover {
-      background: var(--amber-primary); color: var(--bg-black);
-      transform: scale(1.05);
-      box-shadow: 0 0 25px rgba(255, 176, 0, 0.6);
-    }
-
-    .timer-trigger::before { content: '⏰ '; }
-
-    /* === TIMER OVERLAY (Full Screen) === */
-    .timer-overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: var(--bg-black);
-      z-index: 500;
-      padding: 40px;
-      overflow-y: auto;
-    }
-
-    .timer-overlay.show { display: block; animation: fadeIn 0.3s ease; }
-
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-    /* === TIMER SCREEN BORDER === */
-    .timer-screen {
-      max-width: 700px; margin: 40px auto;
-      border: 5px solid var(--amber-dim);
-      padding: 40px;
-      position: relative;
-    }
-
-    .timer-screen::before {
-      content: ''; position: absolute; top: -8px; left: -8px; right: -8px; bottom: -8px;
-      border: 2px solid rgba(255, 176, 0, 0.3); pointer-events: none;
-    }
-
-    /* === BIG TIMER DISPLAY === */
-    .timer-display {
-      font-size: 96px; text-align: center; margin-bottom: 30px; letter-spacing: 8px;
-      background: rgba(0, 0, 0, 0.5); padding: 20px; border: 2px solid var(--amber-dim);
-    }
-
-    /* === CATEGORY SELECTOR (Timer) === */
-    .category-selector {
-      display: flex; gap: 10px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap;
-    }
-
-    .cat-btn {
-      background: var(--bg-dark); border: 2px solid var(--amber-dim);
-      color: var(--amber-primary); font-family: 'VT323', monospace;
-      font-size: 16px; padding: 8px 16px; cursor: pointer; letter-spacing: 1px;
-    }
-
-    .cat-btn.active { background: var(--amber-primary); color: var(--bg-black); border-color: #fff; }
-    .cat-btn:hover:not(.active) { box-shadow: 0 0 10px rgba(255, 176, 0, 0.3); }
-
-    /* === RATING BUTTONS === */
-    .rating-buttons { display: flex; gap: 10px; justify-content: center; margin-bottom: 25px; }
-
-    .rating-btn {
-      width: 50px; height: 50px; border: 2px solid var(--amber-dim);
-      background: var(--bg-dark); color: var(--amber-primary);
-      font-family: 'VT323', monospace; font-size: 24px; cursor: pointer; letter-spacing: 1px;
-    }
-
-    .rating-btn:hover { box-shadow: 0 0 15px rgba(255, 176, 0, 0.4); transform: scale(1.1); }
-    
-    .rating-btn.selected { background: var(--amber-primary); color: var(--bg-black); 
-      box-shadow: 0 0 20px var(--amber-glow), inset 0 0 10px rgba(255, 255, 255, 0.3);
-    }
-
-    /* === TIMER CONTROLS === */
-    .timer-controls { display: flex; gap: 15px; justify-content: center; margin-bottom: 30px; }
-
-    .btn-main {
-      font-family: 'VT323', monospace; font-size: 24px; padding: 12px 40px; cursor: pointer;
-      letter-spacing: 2px; transition: all 0.2s ease; border: none;
-    }
-
-    .btn-start { background: var(--amber-primary); color: var(--bg-black); font-weight: bold; }
-    .btn-stop { background: #cc3300; color: white; font-weight: bold; }
-    .btn-reset { background: transparent; border: 2px solid var(--amber-dim); color: var(--amber-primary); }
-
-    .btn-main:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 176, 0, 0.4); }
-    .btn-main:active:not(:disabled) { transform: translateY(0); }
-    .btn-main:disabled { opacity: 0.3; cursor: not-allowed; }
-
-    /* === POST-CALL EDIT SCREEN (Initially Hidden) === */
-    .post-call-edit { display: none; margin-top: 25px; padding-top: 25px; border-top: 2px dashed var(--amber-dim); }
-    .post-call-edit.show { display: block; animation: fadeIn 0.3s ease; }
-
-    /* === EDIT FORM FIELDS === */
-    .edit-field { margin-bottom: 15px; }
-    
-    .edit-label { display: block; color: var(--amber-dim); margin-bottom: 8px; font-size: 16px; letter-spacing: 1px; }
-
-    .edit-input, .edit-textarea {
-      width: 100%; background: rgba(255, 255, 255, 0.05); border: 2px solid var(--amber-dim);
-      color: var(--amber-primary); font-family: 'VT323', monospace; font-size: 18px; padding: 10px;
-    }
-
-    .edit-textarea { min-height: 80px; resize: vertical; letter-spacing: 1px; }
-
-    /* === INSIGHTS PANEL === */
-    .insights-panel {
-      margin-top: 25px; padding: 20px; background: rgba(255, 176, 0, 0.05);
-      border: 2px solid var(--amber-dim); letter-spacing: 1px;
-    }
-
-    .insights-title { 
-      font-size: 22px; color: #ffcc44; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; 
-    }
-
-    /* === ADD CATEGORY FORM === */
-    .add-category-form { display: flex; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--amber-dim); align-items: center; }
-
-    .form-input {
-      flex: 1; background: rgba(255, 255, 255, 0.05); border: 2px solid var(--amber-dim);
-      color: var(--amber-primary); font-family: 'VT323', monospace; font-size: 16px; padding: 8px 12px; letter-spacing: 1px;
-    }
-
-    .form-input:focus { outline: none; border-color: var(--amber-primary); box-shadow: 0 0 10px rgba(255, 176, 0, 0.3); }
-
-    /* === RESET MODAL === */
-    .reset-modal {
-      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.9); z-index: 600; justify-content: center; align-items: center;
-    }
-
-    .reset-modal.show { display: flex; animation: fadeIn 0.3s ease; }
-
-    .modal-content {
-      background: var(--bg-dark); border: 4px solid var(--amber-primary); padding: 40px; max-width: 500px; text-align: center;
-      box-shadow: 0 0 50px rgba(255, 176, 0, 0.3);
-    }
-
-    .modal-content h2 { font-size: 32px; margin-bottom: 20px; letter-spacing: 3px; }
-    .modal-content p { color: var(--amber-dim); margin-bottom: 30px; letter-spacing: 1px; }
-
-    /* === EMPTY STATE === */
-    .empty-state { text-align: center; padding: 40px; color: var(--amber-dim); font-size: 20px; letter-spacing: 1px; }
-    
-    /* === MANUAL ENTRY TOGGLE === */
-    .toggle-btn {
-      background: transparent; border: 2px solid var(--amber-dim); color: var(--amber-primary);
-      font-family: 'VT323', monospace; padding: 8px 16px; cursor: pointer; letter-spacing: 1px;
-    }
-
-    .toggle-btn:hover { box-shadow: 0 0 10px rgba(255, 176, 0, 0.3); }
-
-    /* === MANUAL ENTRY FORM === */
-    .manual-entry-form { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--amber-dim); }
-    .manual-entry-form.show { display: block; animation: fadeIn 0.3s ease; }
-
-    /* === PROGRESS BAR === */
-    .progress-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--amber-dim); }
-    
-    .progress-bar-bg { background: rgba(0, 0, 0, 0.5); height: 16px; overflow: hidden; margin-top: 8px; border: 1px solid var(--amber-dim); }
-    
-    .progress-bar-fill { 
-      background: linear-gradient(90deg, #cc8c00, #ffb000, #ffcc44); height: 100%; transition: width 0.5s ease; 
-    }
-
-    /* === ACTIONS BUTTONS === */
-    .edit-actions { display: flex; gap: 10px; margin-top: 8px; font-size: 13px; }
-    
-    .action-btn {
-      background: transparent; border: 1px solid var(--amber-dim); color: var(--amber-primary);
-      padding: 4px 12px; cursor: pointer; font-family: 'VT323', monospace; letter-spacing: 1px;
-    }
-
-    .action-btn:hover { box-shadow: 0 0 8px rgba(255, 176, 0, 0.4); }
-
-    /* === RESPONSIVE ADJUSTMENTS === */
-    @media (max-width: 768px) {
-      .timer-display { font-size: 64px; letter-spacing: 4px; }
-      .panels { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-      .panel-value { font-size: 24px; }
-    }
-
-    @media (max-width: 480px) {
-      body { font-size: 16px; }
-      .ticker-item { padding: 0 15px; gap: 10px; font-size: 16px; }
-      .timer-screen { padding: 25px; margin: 20px auto; border-width: 3px; }
-    }
-
-    /* === CURSOR BLINK (Retro Terminal) === */
-    @keyframes blink { 50% { opacity: 0; } }
-    .cursor-blink::after { content: '_'; animation: blink 1s step-end infinite; margin-left: 4px; color: var(--amber-primary); }
-
-    /* === RETRO DECORATIONS === */
-    .retro-decoration { position: absolute; font-size: 36px; opacity: 0.2; pointer-events: none; }
-    .deco-top-left { top: 10px; left: 15px; }
-    .deco-bottom-right { bottom: 10px; right: 15px; }
-
-    /* === WEEKLY SUMMARY TOGGLE BUTTON === */
-    .weekly-toggle-btn { display: flex; align-items: center; gap: 8px; }
-    
-    /* === HIDE CLASS === */
-    .hidden { display: none !important; }
-
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SECURE TERMINAL // FORENSIC HUD</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 15px;
+            background-color: #020202; /* Strictly black/dark background, no amber flash */
+            color: #ffb000;
+            font-family: 'Courier New', Courier, monospace;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 2px solid #ffb000; /* Bezel explicitly locked to browser window */
+            text-shadow: 0 0 3px rgba(255, 176, 0, 0.4);
+        }
+        ::selection {
+            background: #ffb000;
+            color: #020202;
+        }
+        #hud {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #ffb000;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .hud-stat {
+            display: flex;
+            flex-direction: column;
+        }
+        .hud-label {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            text-transform: uppercase;
+        }
+        #output-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding-bottom: 10px;
+        }
+        /* Scrollbar hiding for terminal purity */
+        #output-container::-webkit-scrollbar { width: 0px; }
+        .log-line {
+            margin: 2px 0;
+            line-height: 1.2;
+            font-size: 0.85rem;
+            word-wrap: break-word;
+        }
+        .diag-alert {
+            color: #ff3333;
+            text-shadow: 0 0 3px rgba(255, 51, 51, 0.6);
+        }
+        #input-row {
+            display: flex;
+            align-items: center;
+            border-top: 1px solid #ffb000;
+            padding-top: 10px;
+        }
+        #prompt {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        input {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            color: #ffb000;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1rem;
+            outline: none;
+            text-shadow: 0 0 3px rgba(255, 176, 0, 0.4);
+        }
+        #command-ref {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            opacity: 0.6;
+            cursor: default;
+        }
+        .cmd {
+            position: relative;
+            padding: 2px 5px;
+            border: 1px dashed transparent;
+        }
+        .cmd:hover {
+            border-color: #ffb000;
+            opacity: 1;
+            background: rgba(255, 176, 0, 0.1);
+        }
+        .tooltip {
+            visibility: hidden;
+            width: 200px;
+            background-color: #ffb000;
+            color: #020202;
+            text-align: left;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            box-shadow: 0 0 5px rgba(255,176,0,0.8);
+        }
+        .cmd:hover .tooltip {
+            visibility: visible;
+        }
+    </style>
 </head>
-<body class="glow">
+<body>
 
-<!-- SCROLLING TICKER BAR -->
-<div class="ticker-bar">
-  <div class="ticker-track" id="tickerTrack">
-    <!-- Filled by JS -->
-  </div>
-</div>
-
-<div class="dashboard">
-
-  <!-- DASHBOARD PANELS (Always Visible) -->
-  <div class="panels glow">
-    <div class="panel">
-      <div class="panel-title">Calls Today</div>
-      <div class="panel-value" id="callsToday">0</div>
+    <div id="hud">
+        <div class="hud-stat"><span class="hud-label">Enterprise Value (EV)</span><span id="ev-val">$245.5M</span></div>
+        <div class="hud-stat"><span class="hud-label">Operating Margin</span><span id="margin-val">68.2%</span></div>
+        <div class="hud-stat"><span class="hud-label">CapEx (Outbound)</span><span id="calls-val">12</span></div>
+        <div class="hud-stat"><span class="hud-label">Toxic Debt (CE)</span><span id="ce-val">8 Hrs</span></div>
+        <div class="hud-stat"><span class="hud-label">R&D (Strat Reviews)</span><span id="strat-val">0</span></div>
+        <div class="hud-stat"><span class="hud-label">Status</span><span id="status-val">HOLD</span></div>
     </div>
 
-    <div class="panel">
-      <div class="panel-title">Revenue (Received)</div>
-      <div class="panel-value">$<span id="assetsReceived">0</span>K</div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-title">Pending Pipeline</div>
-      <div class="panel-value negative">$<span id="assetsPending">0</span>K</div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-title">Streak</div>
-      <div class="panel-value" id="streakCount">🔥 0</div>
-    </div>
-  </div>
-
-  <!-- MAIN CONTENT GRID -->
-  <div class="main-grid">
-    
-    <!-- DAILY LOG PANEL (Left) -->
-    <div class="daily-log-panel glow">
-      <div class="panel-header">
-        <span class="panel-title-lg">TODAY'S ACTIVITY</span>
-        <button class="toggle-btn weekly-toggle-btn" onclick="document.getElementById('weeklyData').classList.toggle('hidden')">
-          📅 VIEW WEEKLY SUMMARY
-        </button>
-      </div>
-
-      <!-- Weekly Summary Grid (Initially Hidden) -->
-      <div class="weekly-grid hidden" id="weeklyData"></div>
-
-      <!-- Call Entries Container -->
-      <div id="callEntriesContainer">
-        <div class="empty-state">NO CALLS LOGGED YET. HIT THE TIMER BUTTON TO START.</div>
-      </div>
-
-      <!-- Add Category Form -->
-      <div class="add-category-form">
-        <input type="text" class="form-input" id="newCategoryInput" placeholder="NEW CATEGORY NAME..." style="flex: 1;">
-        <button class="btn-main btn-reset" onclick="addCategory()">ADD</button>
-        <button class="btn-main btn-reset" onclick="resetBenchmarks()" title="Reset all high scores and averages">🔄 RESET BENCHMARKS</button>
-      </div>
-
-      <!-- Progress Bar -->
-      <div class="progress-section">
-        <div style="display: flex; justify-content: space-between; font-size: 16px;">
-          <span>TODAY'S CALLS</span>
-          <span id="progressText" style="color: var(--amber-dim);"></span>
+    <div id="output-container">
         </div>
-        <div class="progress-bar-bg">
-          <div class="progress-bar-fill" id="progressBar" style="width: 0%;"></div>
-        </div>
-      </div>
 
+    <div id="input-row">
+        <span id="prompt">&gt;</span>
+        <input type="text" id="cmd-input" autocomplete="off" autofocus spellcheck="false">
     </div>
 
-    <!-- RIGHT PANEL (Insights + Quick Stats) -->
-    <div class="insights-panel glow">
-      <div class="insights-title">💡 MENTOR INSIGHT</div>
-      <div id="insightContent" style="line-height: 1.7;">LOADING...</div>
-      
-      <!-- Manual Entry Toggle (Right Panel) -->
-      <button class="toggle-btn" style="margin-top: 20px; width: 100%;" onclick="document.getElementById('manualEntryForm').classList.toggle('show')">➕ LOG TIME MANUALLY</button>
-
-      <!-- Manual Entry Form -->
-      <div class="manual-entry-form hidden" id="manualEntryForm">
-        <h3 style="font-size: 24px; margin-bottom: 15px;">MANUAL TIME ENTRY</h3>
-        <div class="edit-field">
-          <label class="edit-label">DURATION (MINUTES)</label>
-          <input type="number" id="manualMinutes" min="1" placeholder="e.g., 25" class="edit-input">
+    <div id="command-ref">
+        <div class="cmd">CALL [n]
+            <span class="tooltip">Log outbound dividend touches. Increases baseline multiple. Ex: CALL 5</span>
         </div>
-        <div class="edit-field">
-          <label class="edit-label">CATEGORY</label>
-          <select id="manualCategory" class="edit-input"></select>
+        <div class="cmd">STRAT
+            <span class="tooltip">Log 1 completed Strategic Review. Clears CapEx deficits.</span>
         </div>
-        <button class="btn-main btn-start" onclick="addManualEntry()">LOG ENTRY</button>
-      </div>
+        <div class="cmd">CE [h]
+            <span class="tooltip">Service toxic debt. Reduces cognitive drag penalty. Ex: CE 1</span>
+        </div>
+        <div class="cmd">ACQ-O [val]
+            <span class="tooltip">Log organic assets from existing clients in millions. Ex: ACQ-O 1.5</span>
+        </div>
+        <div class="cmd">ACQ-E [val]
+            <span class="tooltip">Log external assets from new clients in millions. Ex: ACQ-E 2.0</span>
+        </div>
+        <div class="cmd">NOTE [txt]
+            <span class="tooltip">Log qualitative Forward Guidance for algorithmic sentiment analysis.</span>
+        </div>
+        <div class="cmd">DIAG
+            <span class="tooltip">Run deep system diagnostic and opportunity cost output.</span>
+        </div>
     </div>
 
-  </div>
-
-</div>
-
-<!-- TIMER OVERLAY (Full Screen) -->
-<div class="timer-overlay" id="timerOverlay">
-  <div class="timer-screen glow">
-
-    <!-- TIMER DISPLAY SCREEN -->
-    <div id="timerDisplayScreen">
-      <div class="timer-display cursor-blink" id="timerDisplay">00:00:00</div>
-      
-      <div class="category-selector" id="categorySelector"></div>
-      
-      <div style="text-align: center; margin-bottom: 25px;">
-        <span style="color: var(--amber-dim); font-size: 16px; letter-spacing: 1px;">PRE-CALL ANXIETY (1-5)</span><br><br>
-        <div class="rating-buttons" id="preAnxietyButtons"></div>
-      </div>
-
-      <div class="timer-controls">
-        <button class="btn-main btn-start" id="startBtn">START</button>
-        <button class="btn-main btn-stop" id="stopBtn" disabled>STOP</button>
-        <button class="btn-main btn-reset" id="resetBtn">RESET</button>
-      </div>
-
-      <button class="toggle-btn" onclick="closeTimerOverlay()" style="margin-top: 20px;">✕ CLOSE TIMER</button>
-    </div>
-
-    <!-- POST-CALL EDIT SCREEN (Initially Hidden) -->
-    <div id="postCallEditScreen" class="post-call-edit">
-      <h3 style="font-size: 24px; margin-bottom: 15px;">POST-CALL METRICS</h3>
-      
-      <div style="text-align: center; margin-bottom: 20px;">
-        <span style="color: var(--amber-dim); font-size: 16px; letter-spacing: 1px;">POST-CALL EASE (1-5, WHERE 5 = EASIEST)</span><br><br>
-        <div class="rating-buttons" id="postEaseButtons"></div>
-      </div>
-
-      <div class="edit-field">
-        <label class="edit-label">PROSPECTS FROM THIS CALL</label>
-        <input type="number" id="prospectsInput" min="0" value="0" class="edit-input">
-      </div>
-
-      <div class="edit-field">
-        <label class="edit-label">$ PENDING VALUE ($)</label>
-        <input type="number" id="pendingInput" min="0" value="0" class="edit-input">
-      </div>
-
-      <div class="edit-field">
-        <label class="edit-label">$ RECEIVED VALUE ($)</label>
-        <input type="number" id="receivedInput" min="0" value="0" class="edit-input">
-      </div>
-
-      <div class="edit-field">
-        <label class="edit-label">CALL NOTES (OPTIONAL)</label>
-        <textarea id="callNotesInput" placeholder="What happened in this call? Any follow-ups needed?" class="edit-textarea"></textarea>
-      </div>
-
-      <div style="display: flex; gap: 15px; justify-content: center;">
-        <button class="btn-main btn-start" onclick="saveCallEntry()">💾 SAVE ENTRY</button>
-        <button class="btn-main btn-reset" onclick="closeTimerOverlay()">CANCEL</button>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<!-- RESET CONFIRMATION MODAL -->
-<div class="reset-modal" id="resetModal">
-  <div class="modal-content glow">
-    <h2>RESET BENCHMARKS?</h2>
-    <p>This will clear all high scores and averages. You cannot undo this.</p>
-    <div style="display: flex; gap: 15px; justify-content: center;">
-      <button class="btn-main btn-start" onclick="confirmReset()">YES, RESET</button>
-      <button class="btn-main btn-reset" onclick="closeModal()">CANCEL</button>
-    </div>
-  </div>
-</div>
-
-<!-- TIMER TRIGGER BUTTON (Sticky Bottom Right) -->
-<button class="timer-trigger" id="timerTrigger" onclick="openTimerOverlay()">START TIMER</button>
-
-<script>
-/**
- * ADVISORFLOW - 80s Stock Broker Dashboard
- * Features: CRT effects, scrolling ticker, editable metrics, mechanical sounds
- */
-
-// === STATE MANAGEMENT ===
-const appState = {
-  categories: ['Phone Calls', 'Appts', 'Research', 'CE', 'Other'],
-  activeCategory: 'Phone Calls',
-  
-  timer: {
-    running: false,
-    startTime: null,
-    elapsedSeconds: 0,
-    intervalId: null
-  },
-
-  currentCall: {
-    preAnxiety: null,
-    postEase: null,
-    notes: '',
-    prospectsLogged: 0,
-    assetsPendingValue: 0,
-    assetsReceivedValue: 0,
-    durationMinutes: 0
-  },
-
-  dailyLogs: [],
-  
-  benchmarks: {
-    bestDayCalls: 0,
-    avgDailyCalls: 0,
-    lastResetDate: null
-  }
-};
-
-// === DOM ELEMENTS ===
-const elements = {
-  timerDisplay: document.getElementById('timerDisplay'),
-  startBtn: document.getElementById('startBtn'),
-  stopBtn: document.getElementById('stopBtn'),
-  resetBtn: document.getElementById('resetBtn'),
-  
-  categorySelector: document.getElementById('categorySelector'),
-  preAnxietyButtons: document.getElementById('preAnxietyButtons'),
-  postEaseButtons: document.getElementById('postEaseButtons'),
-  callNotesInput: document.getElementById('callNotesInput'),
-  prospectsInput: document.getElementById('prospectsInput'),
-  pendingInput: document.getElementById('pendingInput'),
-  receivedInput: document.getElementById('receivedInput'),
-  
-  callEntriesContainer: document.getElementById('callEntriesContainer'),
-  tickerTrack: document.getElementById('tickerTrack'),
-  
-  timerOverlay: document.getElementById('timerOverlay'),
-  timerDisplayScreen: document.getElementById('timerDisplayScreen'),
-  postCallEditScreen: document.getElementById('postCallEditScreen')
-};
-
-// === INITIALIZATION ===
-function init() {
-  loadData();
-  renderCategories();
-  renderAnxietyButtons();
-  renderPostEaseButtons();
-  renderCallEntries();
-  updateTicker();
-  generateInsight();
-  
-  // Populate manual entry dropdown
-  const manualCatSelect = document.getElementById('manualCategory');
-  manualCatSelect.innerHTML = appState.categories.map(c => 
-    `<option value="${c}">${c}</option>`
-  ).join('');
-
-  // Event Listeners
-  elements.startBtn.addEventListener('click', startTimer);
-  elements.stopBtn.addEventListener('click', stopTimer);
-  elements.resetBtn.addEventListener('click', resetTimer);
-  
-  document.getElementById('newCategoryInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') addCategory();
-  });
-
-  // Start ticker animation loop for smooth updates
-  setInterval(updateTicker, 1000);
-}
-
-// === LOCAL STORAGE ===
-function loadData() {
-  const saved = localStorage.getItem('advisorflow_data');
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      appState.categories = parsed.categories || appState.categories;
-      appState.activeCategory = parsed.activeCategory || appState.activeCategory;
-      appState.dailyLogs = parsed.dailyLogs || [];
-      appState.benchmarks = parsed.benchmarks || appState.benchmarks;
-    } catch (e) {
-      console.error('Data load error:', e);
-    }
-  }
-}
-
-function saveData() {
-  const data = {
-    categories: appState.categories,
-    activeCategory: appState.activeCategory,
-    dailyLogs: appState.dailyLogs,
-    benchmarks: appState.benchmarks
-  };
-  localStorage.setItem('advisorflow_data', JSON.stringify(data));
-}
-
-// === TIMER FUNCTIONS ===
-function startTimer() {
-  if (appState.timer.running) return;
-  
-  appState.timer.running = true;
-  appState.timer.startTime = Date.now();
-  elements.startBtn.disabled = true;
-  elements.stopBtn.disabled = false;
-  elements.resetBtn.disabled = true;
-  
-  playClickSound('start');
-}
-
-function stopTimer() {
-  if (!appState.timer.running) return;
-  
-  clearInterval(appState.timer.intervalId);
-  appState.timer.running = false;
-  
-  // Calculate duration
-  const now = Date.now();
-  const elapsedMs = now - (appState.timer.startTime || now);
-  appState.currentCall.durationMinutes = Math.round(elapsedMs / 1000 / 60);
-  if (appState.currentCall.durationMinutes < 1) appState.currentCall.durationMinutes = 1;
-  
-  elements.startBtn.disabled = false;
-  elements.stopBtn.disabled = true;
-  elements.resetBtn.disabled = false;
-  
-  // Switch to edit screen
-  switchToPostCallEdit();
-  playClickSound('stop');
-}
-
-function resetTimer() {
-  clearInterval(appState.timer.intervalId);
-  appState.timer.running = false;
-  appState.timer.elapsedSeconds = 0;
-  appState.currentCall.preAnxiety = null;
-  appState.currentCall.postEase = null;
-  
-  formatTimerDisplay(0);
-  resetForm();
-  
-  playClickSound('reset');
-}
-
-function switchToPostCallEdit() {
-  elements.timerDisplayScreen.classList.add('hidden');
-  elements.postCallEditScreen.classList.add('show');
-  
-  // Reset edit form values from current call state
-  elements.prospectsInput.value = appState.currentCall.prospectsLogged || 0;
-  elements.pendingInput.value = appState.currentCall.assetsPendingValue || 0;
-  elements.receivedInput.value = appState.currentCall.assetsReceivedValue || 0;
-  
-  // If anxiety was rated, show that too for comparison (optional enhancement)
-}
-
-function resetForm() {
-  appState.currentCall.preAnxiety = null;
-  appState.currentCall.postEase = null;
-  elements.callNotesInput.value = '';
-  renderAnxietyButtons();
-  renderPostEaseButtons();
-}
-
-function formatTimerDisplay(totalSeconds) {
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
-  const s = totalSeconds % 60;
-  
-  elements.timerDisplay.textContent = 
-    `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-}
-
-// === OVERLAY FUNCTIONS ===
-function openTimerOverlay() {
-  // Check if we're in post-call edit mode (show that screen instead)
-  if (!appState.timer.running && appState.currentCall.durationMinutes > 0) {
-    elements.timerDisplayScreen.classList.add('hidden');
-    elements.postCallEditScreen.classList.add('show');
-  } else {
-    // Reset to timer display for new call
-    elements.timerDisplayScreen.classList.remove('hidden');
-    elements.postCallEditScreen.classList.remove('show');
-    
-    if (appState.currentCall.durationMinutes > 0) {
-      formatTimerDisplay(appState.currentCall.durationMinutes * 60);
-    } else {
-      formatTimerDisplay(0);
-    }
-    
-    resetForm();
-  }
-  
-  elements.timerOverlay.classList.add('show');
-}
-
-function closeTimerOverlay() {
-  // If we have unsaved data, confirm before closing
-  if (appState.currentCall.durationMinutes > 0 && !elements.postCallEditScreen.classList.contains('hidden')) {
-    if (!confirm('You have an unsaved call entry. Close anyway?')) return;
-  }
-  
-  elements.timerOverlay.classList.remove('show');
-}
-
-// === RENDER FUNCTIONS ===
-function renderCategories() {
-  elements.categorySelector.innerHTML = '';
-  
-  appState.categories.forEach(cat => {
-    const btn = document.createElement('button');
-    btn.className = `cat-btn ${appState.activeCategory === cat ? 'active' : ''}`;
-    btn.textContent = cat.toUpperCase();
-    btn.onclick = () => selectCategory(cat);
-    
-    if (appState.categories.length > 1) {
-      const deleteBtn = document.createElement('span');
-      deleteBtn.innerHTML = '×';
-      deleteBtn.style.cssText = 'margin-left: 8px; cursor: pointer; color: #ff4444; font-weight: bold; font-size: 16px;';
-      deleteBtn.onclick = (e) => { e.stopPropagation(); removeCategory(cat); };
-      btn.appendChild(deleteBtn);
-    }
-    
-    elements.categorySelector.appendChild(btn);
-  });
-}
-
-function selectCategory(category) {
-  appState.activeCategory = category;
-  saveData();
-  renderCategories();
-  
-  // Also update manual entry dropdown
-  const manualCatSelect = document.getElementById('manualCategory');
-  if (manualCatSelect) {
-    manualCatSelect.innerHTML = appState.categories.map(c => 
-      `<option value="${c}">${c}</option>`
-    ).join('');
-  }
-}
-
-// Pre-Anxiety Buttons (1-5 where 5 is most anxious)
-function renderAnxietyButtons() {
-  elements.preAnxietyButtons.innerHTML = '';
-  
-  for (let i = 1; i <= 5; i++) {
-    const btn = document.createElement('button');
-    btn.className = `rating-btn ${appState.currentCall.preAnxiety === i ? 'selected' : ''}`;
-    btn.textContent = i;
-    btn.onclick = () => selectPreAnxiety(i);
-    elements.preAnxietyButtons.appendChild(btn);
-  }
-}
-
-function selectPreAnxiety(value) {
-  appState.currentCall.preAnxiety = value;
-  renderAnxietyButtons();
-}
-
-// Post-Ease Buttons (1-5 where 5 is easiest - opposite scale!)
-function renderPostEaseButtons() {
-  elements.postEaseButtons.innerHTML = '';
-  
-  for (let i = 1; i <= 5; i++) {
-    const btn = document.createElement('button');
-    // Higher number = easier call (opposite of pre-anxiety)
-    btn.className = `rating-btn ${appState.currentCall.postEase === i ? 'selected' : ''}`;
-    btn.textContent = i;
-    btn.onclick = () => selectPostEase(i);
-    elements.postEaseButtons.appendChild(btn);
-  }
-}
-
-function selectPostEase(value) {
-  appState.currentCall.postEase = value;
-  renderPostEaseButtons();
-}
-
-// === CALL ENTRY RENDERING (WITH EDITABLE FIELDS) ===
-function renderCallEntries() {
-  const today = new Date().toISOString().split('T')[0];
-  const todaysCalls = appState.dailyLogs.filter(log => log.date === today);
-  
-  elements.callEntriesContainer.innerHTML = '';
-  
-  if (todaysCalls.length === 0) {
-    elements.callEntriesContainer.innerHTML = `
-      <div class="empty-state">NO CALLS LOGGED YET. HIT THE TIMER BUTTON TO START.</div>
-    `;
-    
-    renderWeeklyData();
-    return;
-  }
-  
-  todaysCalls.forEach((call, index) => {
-    const entry = document.createElement('div');
-    entry.className = 'call-entry';
-    
-    let anxietyDisplay = '';
-    if (call.preAnxiety !== null || call.postEase !== null) {
-      const preText = call.preAnxiety !== null ? `${call.preAnxiety}/5` : '-';
-      const postText = call.postEase !== null ? `${call.postEase}/5` : '-';
-      
-      anxietyDisplay = `<div class="call-meta">📊 PRE: ${preText} | 😊 POST: ${postText}</div>`;
-    }
-    
-    let editButtonsHtml = '';
-    if (todaysCalls.length === 1) { // Only allow editing today's entries
-      editButtonsHtml = `
-        <div class="edit-actions">
-          <button class="action-btn" onclick="toggleMetricsEdit(${call.id})">✏️ EDIT METRICS</button>
-          <button class="action-btn" style="color: #ff4444;" onclick="deleteCallEntry(${call.id})">🗑️ DELETE</button>
-        </div>
-      `;
-    }
-    
-    entry.innerHTML = `
-      <div class="call-header">
-        <span>${call.category.toUpperCase()} • ${formatTime(call.durationMinutes * 60)}</span>
-        <span style="color: var(--amber-primary);">$${(call.assetsReceivedValue || 0).toLocaleString()}</span>
-      </div>
-      ${anxietyDisplay}
-      ${call.prospectsLogged > 0 ? `<div class="call-meta">📈 ${call.prospectsLogged} PROSPECT(S)</div>` : ''}
-      
-      <!-- EDITABLE METRICS SECTION (Initially Hidden) -->
-      <div class="metrics-edit hidden" id="metricsEdit-${call.id}">
-        <div class="metric-field">
-          <span class="metric-label">PROSPECTS:</span>
-          <input type="number" class="metric-input" value="${call.prospectsLogged || 0}" min="0" onchange="updateCallMetric(${call.id}, 'prospects', this.value)">
-        </div>
-        <div class="metric-field">
-          <span class="metric-label">$ PENDING:</span>
-          <input type="number" class="metric-input" value="${call.assetsPendingValue || 0}" min="0" onchange="updateCallMetric(${call.id}, 'pending', this.value)">
-        </div>
-        <div class="metric-field">
-          <span class="metric-label">$ RECEIVED:</span>
-          <input type="number" class="metric-input" value="${call.assetsReceivedValue || 0}" min="0" onchange="updateCallMetric(${call.id}, 'received', this.value)">
-        </div>
-      </div>
-      
-      ${editButtonsHtml}
-      
-      ${call.notes ? `<div class="call-note">"${escapeHtml(call.notes)}"</div>` : ''}
-    `;
-    
-    elements.callEntriesContainer.appendChild(entry);
-  });
-  
-  renderWeeklyData();
-}
-
-// === EDITABLE METRIC FUNCTIONS ===
-function toggleMetricsEdit(callId) {
-  const metricsDiv = document.getElementById(`metricsEdit-${callId}`);
-  if (metricsDiv.classList.contains('hidden')) {
-    metricsDiv.classList.remove('hidden');
-  } else {
-    metricsDiv.classList.add('hidden');
-  }
-}
-
-function updateCallMetric(callId, metricType, value) {
-  const callIndex = appState.dailyLogs.findIndex(l => l.id === callId);
-  if (callIndex === -1) return;
-  
-  const newValue = parseInt(value) || 0;
-  
-  if (metricType === 'prospects') {
-    appState.dailyLogs[callIndex].prospectsLogged = newValue;
-  } else if (metricType === 'pending') {
-    appState.dailyLogs[callIndex].assetsPendingValue = newValue;
-  } else if (metricType === 'received') {
-    appState.dailyLogs[callIndex].assetsReceivedValue = newValue;
-  }
-  
-  saveData();
-  updateTicker();
-  generateInsight();
-}
-
-function deleteCallEntry(callId) {
-  if (!confirm('DELETE THIS CALL ENTRY? CANNOT UNDO.')) return;
-  
-  appState.dailyLogs = appState.dailyLogs.filter(l => l.id !== callId);
-  saveData();
-  renderCallEntries();
-  updateTicker();
-  generateInsight();
-}
-
-// === SAVE CALL ENTRY (FROM TIMER) ===
-function saveCallEntry() {
-  if (!appState.currentCall.durationMinutes || appState.currentCall.durationMinutes < 1) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  
-  // Get values from edit form inputs
-  const prospects = parseInt(elements.prospectsInput.value) || 0;
-  const pending = parseInt(elements.pendingInput.value) || 0;
-  const received = parseInt(elements.receivedInput.value) || 0;
-  
-  const callEntry = {
-    id: Date.now(),
-    date: today,
-    durationMinutes: appState.currentCall.durationMinutes,
-    category: appState.activeCategory,
-    preAnxiety: appState.currentCall.preAnxiety !== null ? appState.currentCall.preAnxiety : 3,
-    postEase: appState.currentCall.postEase !== null ? appState.currentCall.postEase : 3,
-    notes: elements.callNotesInput.value.trim(),
-    prospectsLogged: prospects,
-    assetsPendingValue: pending,
-    assetsReceivedValue: received
-  };
-  
-  appState.dailyLogs.unshift(callEntry);
-  saveData();
-  
-  // Reset form state
-  closeTimerOverlay();
-  renderCategories();
-  renderCallEntries();
-  updateTicker();
-  generateInsight();
-}
-
-// === MANUAL ENTRY ===
-function addManualEntry() {
-  const minutes = parseInt(document.getElementById('manualMinutes').value);
-  if (!minutes || minutes < 1) {
-    alert('PLEASE ENTER A VALID DURATION');
-    return;
-  }
-  
-  const category = document.getElementById('manualCategory').value;
-  
-  const callEntry = {
-    id: Date.now(),
-    date: new Date().toISOString().split('T')[0],
-    durationMinutes: minutes,
-    category: category,
-    preAnxiety: 3, // Default for manual entry
-    postEase: 3,
-    notes: '',
-    prospectsLogged: 0,
-    assetsPendingValue: 0,
-    assetsReceivedValue: 0
-  };
-  
-  appState.dailyLogs.unshift(callEntry);
-  saveData();
-  renderCallEntries();
-  updateTicker();
-  generateInsight();
-  
-  document.getElementById('manualEntryForm').classList.add('hidden');
-}
-
-// === ADD CATEGORY ===
-function addCategory() {
-  const input = document.getElementById('newCategoryInput');
-  const name = input.value.trim();
-  
-  if (!name) return;
-  if (appState.categories.includes(name)) {
-    alert(`"${name}" ALREADY EXISTS!`);
-    return;
-  }
-  
-  appState.categories.push(name);
-  saveData();
-  renderCategories();
-  input.value = '';
-}
-
-function removeCategory(category) {
-  if (appState.categories.length <= 1) {
-    alert('YOU NEED AT LEAST ONE CATEGORY!');
-    return;
-  }
-  
-  if (!confirm(`DELETE "${category.uppercase()}?" PAST ENTRIES WILL REMAIN BUT WON'T HAVE THIS CATEGORY.`)) return;
-  
-  appState.categories = appState.categories.filter(c => c !== category);
-  saveData();
-  renderCategories();
-}
-
-// === WEEKLY DATA RENDERING ===
-function renderWeeklyData() {
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-  
-  const weekLogs = appState.dailyLogs.filter(log => 
-    new Date(log.date) >= sevenDaysAgo
-  );
-  
-  // Build empty 7-day grid first
-  const weekData = {};
-  for (let i = 0; i < 7; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() - (6 - i));
-    const dateStr = date.toISOString().split('T')[0];
-    
-    weekData[dateStr] = {
-      name: date.toLocaleDateString('en-US', { weekday: 'short' }),
-      calls: 0,
-      timeMinutes: 0,
-      revenue: 0,
-      prospects: 0
-    };
-  }
-  
-  // Fill in actual data
-  for (const call of weekLogs) {
-    if (weekData[call.date]) {
-      weekData[call.date].calls++;
-      weekData[call.date].timeMinutes += call.durationMinutes;
-      weekData[call.date].revenue += (call.assetsReceivedValue || 0);
-      weekData[call.date].prospects += (call.prospectsLogged || 0);
-    }
-  }
-  
-  const gridHtml = Object.values(weekData).map(day => {
-    const isBest = day.calls === appState.benchmarks.bestDayCalls && day.calls > 0;
-    return `
-      <div class="day-card">
-        ${isBest ? '<span class="day-best">🏆 BEST</span>' : ''}
-        <div class="day-name">${day.name}</div>
-        <div class="day-value" style="font-size: 24px;">${day.calls}</div>
-        <small style="color: var(--amber-dim);">${formatTime(day.timeMinutes * 60)}</small><br>
-        <small style="color: var(--amber-primary);">$${(day.revenue / 1000).toFixed(0)}K</small>
-      </div>
-    `;
-  }).join('');
-  
-  elements.weeklyData.innerHTML = gridHtml || '<div class="empty-state">NO DATA FOR LAST 7 DAYS</div>';
-}
-
-// === TICKER UPDATE (SCROLLING) ===
-function updateTicker() {
-  const today = new Date().toISOString().split('T')[0];
-  const todaysCalls = appState.dailyLogs.filter(log => log.date === today);
-  
-  const totalCalls = todaysCalls.length;
-  const totalTimeMinutes = todaysCalls.reduce((sum, l) => sum + (l.durationMinutes || 0), 0);
-  const prospectsCount = todaysCalls.reduce((sum, l) => sum + (l.prospectsLogged || 0), 0);
-  const assetsReceived = todaysCalls.reduce((sum, l) => sum + (l.assetsReceivedValue || 0), 0);
-  const assetsPending = todaysCalls.reduce((sum, l) => sum + (l.assetsPendingValue || 0), 0);
-  
-  // Streak calculation (consecutive days with at least 1 call)
-  let streak = 0;
-  for (let i = 0; i < 365; i++) {
-    const checkDate = new Date();
-    checkDate.setDate(checkDate.getDate() - i);
-    const dateStr = checkDate.toISOString().split('T')[0];
-    
-    if (appState.dailyLogs.some(log => log.date === dateStr)) {
-      streak++;
-    } else if (i > 0) {
-      break;
-    }
-  }
-  
-  // Build ticker items array
-  const tickerItems = [
-    { label: 'CALLS TODAY', value: totalCalls },
-    { label: 'TIME SPENT', value: formatTime(totalTimeMinutes * 60), isTime: true },
-    { label: 'PROSPECTS', value: prospectsCount },
-    { label: '$ ASSETS (REC)', value: `$${(assetsReceived / 1000).toFixed(0)}K` },
-    { label: '$ PENDING', value: `$${(assetsPending / 1000).toFixed(0)}K`, isNegative: assetsPending > 0 },
-    { label: 'STREAK', value: `🔥 ${streak}` },
-    { label: 'VS BEST DAY', value: `${totalCalls}/${appState.benchmarks.bestDayCalls || totalCalls}`, isAvg: true }
-  ];
-  
-  // Create ticker HTML (duplicated for seamless scroll)
-  let html = '';
-  
-  for (const item of tickerItems) {
-    let valueClass = 'ticker-value';
-    if (item.isNegative) valueClass += ' negative';
-    
-    html += `
-      <div class="ticker-item">
-        <span class="ticker-label">${item.label}</span>
-        <span class="${valueClass}">${item.value}</span>
-      </div>
-    `;
-  }
-  
-  elements.tickerTrack.innerHTML = html + html; // Duplicate for seamless scroll
-  
-  // Update dashboard panel values
-  document.getElementById('callsToday').textContent = totalCalls;
-  document.getElementById('assetsReceived').textContent = (assetsReceived / 1000).toFixed(0);
-  document.getElementById('assetsPending').textContent = (assetsPending / 1000).toFixed(0);
-  document.getElementById('streakCount').textContent = `🔥 ${streak}`;
-  
-  // Update progress bar
-  const bestDay = appState.benchmarks.bestDayCalls || totalCalls;
-  const progressPercent = Math.min(100, (totalCalls / bestDay) * 100);
-  document.getElementById('progressBar').style.width = `${progressPercent}%`;
-  document.getElementById('progressText').textContent = `vs BEST: ${bestDay}`;
-}
-
-// === INSIGHTS GENERATION (SCIENCE-BACKED) ===
-function generateInsight() {
-  const insights = [
-    // Mind Lie Detection (Cognitive Behavioral Science - Beck, 1976)
-    () => {
-      if (!appState.dailyLogs.length) return null;
-      
-      const callsWithAnxiety = appState.dailyLogs.filter(l => l.preAnxiety !== null && l.postEase !== null);
-      if (callsWithAnxiety.length < 3) return null;
-      
-      const avgPreAnxiety = callsWithAnxiety.reduce((sum, c) => sum + c.preAnxiety, 0) / callsWithAnxiety.length;
-      const avgPostEase = callsWithAnxiety.reduce((sum, c) => sum + c.postEase, 0) / callsWithAnxiety.length;
-      
-      // Convert postEase to anxiety-like scale (5 ease = 1 anxiety equivalent)
-      const avgActualDifficulty = 6 - avgPostEase;
-      
-      if (avgPreAnxiety > avgActualDifficulty + 1.5) {
-        return `MIND LIE DETECTED! 🧠 You estimated <span style="color: #ffcc44;">${avgPreAnxiety.toFixed(1)}</span> anxiety before calls, but reality was only <span style="color: #ffcc44;">${avgActualDifficulty.toFixed(1)}</span>. Your brain systematically overestimates difficulty—a pattern psychologists call "affective forecasting bias." Each action rewires this prediction loop.`;
-      }
-      return null;
-    },
-    
-    // Warm-Up Effect (Performance Psychology)
-    () => {
-      const today = new Date().toISOString().split('T')[0];
-      const todaysCalls = appState.dailyLogs.filter(l => l.date === today && l.preAnxiety !== null).sort((a, b) => a.id - b.id);
-      
-      if (todaysCalls.length < 2) return null;
-      
-      const firstCall = todaysCalls[0].preAnxiety;
-      const lastCall = todaysCalls[todaysCalls.length - 1].preAnxiety;
-      
-      if (firstCall > lastCall + 1) {
-        return `WARM-UP EFFECT IN ACTION! 🔥 Your first call averaged <span style="color: #ffcc44;">${firstCall}</span> anxiety, dropping to <span style="color: #ffcc44;">${lastCall}</span> by the end. This mirrors athletic warm-ups—your brain builds momentum with each action.`;
-      }
-      return null;
-    },
-    
-    // Streak Motivation (Behavioral Economics - Loss Aversion)
-    () => {
-      let streak = 0;
-      for (let i = 0; i < 365; i++) {
-        const checkDate = new Date();
-        checkDate.setDate(checkDate.getDate() - i);
-        const dateStr = checkDate.toISOString().split('T')[0];
+    <script>
+        const outputContainer = document.getElementById('output-container');
+        const cmdInput = document.getElementById('cmd-input');
         
-        if (appState.dailyLogs.some(log => log.date === dateStr)) {
-          streak++;
-        } else if (i > 0) {
-          break;
+        let stats = { ev: 245.5, calls: 12, ce: 8, strat: 0 };
+
+        const bootSequence = [
+            "INITIATING SECURE CONNECTION...",
+            "AUTHENTICATING OPERATOR IDENTITY...",
+            "BYPASSING STANDARD CRM PROTOCOLS...",
+            "ESTABLISHING FORENSIC HUD...",
+            "WARNING: 8 HOURS TOXIC DEBT (CE) DETECTED.",
+            "WARNING: CAPEX DEFICIT DETECTED. NO STRATEGIC REVIEWS LOGGED IN 14 DAYS.",
+            "STATUS DOWNGRADED TO: HOLD.",
+            "AWAITING INPUT."
+        ];
+
+        let bootIndex = 0;
+        
+        function printLine(text, isAlert = false) {
+            const line = document.createElement('div');
+            line.className = 'log-line' + (isAlert ? ' diag-alert' : '');
+            line.innerText = text;
+            outputContainer.appendChild(line);
+            outputContainer.scrollTop = outputContainer.scrollHeight;
         }
-      }
-      
-      if (streak >= 5 && streak < 10) {
-        return `STREAK ALERT! 🔥 ${streak} DAY(S) IN A ROW. Behavioral economics shows humans are motivated by "loss aversion"—the pain of breaking a streak feels worse than the joy of starting one.`;
-      } else if (streak >= 10) {
-        return `INCREDIBLE MOMENTUM! 🚀 ${streak} DAYS STRONG! Research on habit formation (~66 days) shows behavior shifts from "willpower-dependent" to "identity-based."`;
-      }
-      return null;
-    },
-    
-    // Revenue Per Hour (Economic Perspective)
-    () => {
-      const today = new Date().toISOString().split('T')[0];
-      const todaysCalls = appState.dailyLogs.filter(l => l.date === today);
-      
-      if (!todaysCalls.length) return null;
-      
-      const totalRevenue = todaysCalls.reduce((sum, l) => sum + (l.assetsReceivedValue || 0), 0);
-      const totalTimeMinutes = todaysCalls.reduce((sum, l) => sum + (l.durationMinutes || 0), 0);
-      
-      if (totalTimeMinutes > 0 && totalRevenue > 0) {
-        const revenuePerHour = (totalRevenue / totalTimeMinutes) * 60;
-        
-        // Historical comparison
-        let histTotalRev = 0, histTotalMin = 0;
-        for (const call of appState.dailyLogs) {
-          histTotalRev += call.assetsReceivedValue || 0;
-          histTotalMin += call.durationMinutes || 0;
+
+        function runBoot() {
+            if (bootIndex < bootSequence.length) {
+                printLine("> " + bootSequence[bootIndex], bootSequence[bootIndex].includes("WARNING"));
+                bootIndex++;
+                setTimeout(runBoot, 300);
+            }
         }
-        
-        const avgRevenuePerHour = histTotalMin > 0 ? (histTotalRev / histTotalMin) * 60 : 0;
-        
-        if (revenuePerHour > avgRevenuePerHour * 1.2 && avgRevenuePerHour > 0) {
-          return `EFFICIENCY CHAMPION! 💰 You're earning <span style="color: #ffcc44;">$${revenuePerHour.toFixed(0)}</span>/hour today, above your average of <span style="color: #ffcc44;">$${avgRevenuePerHour.toFixed(0)}</span>. PROTECT THESE HOURS.`;
-        } else if (totalRevenue > 10000) {
-          return `STRONG VALUE CREATION! 💎 <span style="color: #ffcc44;">$${totalRevenue.toLocaleString()}</span> IN ASSETS TODAY from ${todaysCalls.length} calls. That's the impact that matters.`;
+
+        window.onload = runBoot;
+
+        // Keep focus on input
+        document.body.addEventListener('click', () => cmdInput.focus());
+
+        cmdInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                const rawCmd = this.value.trim();
+                if (!rawCmd) return;
+                
+                printLine("> " + rawCmd);
+                this.value = '';
+                processCommand(rawCmd.toUpperCase());
+            }
+        });
+
+        function updateHUD() {
+            document.getElementById('ev-val').innerText = `$${stats.ev.toFixed(1)}M`;
+            document.getElementById('calls-val').innerText = stats.calls;
+            document.getElementById('ce-val').innerText = `${stats.ce} Hrs`;
+            document.getElementById('strat-val').innerText = stats.strat;
         }
-      }
-      return null;
-    },
-    
-    // Default Uplifting Message
-    () => {
-      const today = new Date().toISOString().split('T')[0];
-      const todaysCalls = appState.dailyLogs.filter(l => l.date === today).length;
-      
-      if (todaysCalls > 0) {
-        return `YOU'VE MADE <span style="color: #ffcc44;">${todaysCalls} CALL(S)</span> TODAY. Research shows small, consistent behaviors create significant long-term results. You're building momentum.`;
-      }
-      
-      if (appState.dailyLogs.length > 0) {
-        return `YOU'VE LOGGED <span style="color: #ffcc44;">${appState.dailyLogs.length} TOTAL CALL(S)</span>. This data is your compass—each entry helps you see patterns and make better decisions.`;
-      }
-      
-      return `READY TO BUILD MOMENTUM? STARTING JUST ONE CALL CHANGES THE EQUATION FROM "AVOIDANCE" TO ACTION. THE HARDEST PART IS ALWAYS BEGINNING.`;
-    }
-  ];
-  
-  for (const insightFn of insights) {
-    const result = insightFn();
-    if (result) {
-      elements.insightContent.innerHTML = result;
-      return;
-    }
-  }
-}
 
-// === UTILITY FUNCTIONS ===
-function formatTime(totalSeconds) {
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
-  
-  if (h > 0) {
-    return `${h}H ${m}M`;
-  }
-  return `${m}M ${(Math.round(totalSeconds % 60))}S`;
-}
+        function processCommand(cmd) {
+            const parts = cmd.split(' ');
+            const base = parts[0];
+            const arg = parts.slice(1).join(' ');
 
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// === MECHANICAL SOUND EFFECTS (Web Audio API) ===
-function playClickSound(type = 'click') {
-  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  
-  // Create a mechanical click/clack sound using multiple oscillators
-  if (type === 'click' || type === 'stop' || type === 'reset') {
-    // Main click body
-    const osc1 = audioCtx.createOscillator();
-    const gain1 = audioCtx.createGain();
-    
-    osc1.connect(gain1);
-    gain1.connect(audioCtx.destination);
-    
-    if (type === 'click') {
-      osc1.frequency.setValueAtTime(800, audioCtx.currentTime);
-      osc1.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.05);
-      gain1.gain.setValueAtTime(0.15, audioCtx.currentTime);
-      gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-    } else if (type === 'stop') {
-      osc1.frequency.setValueAtTime(600, audioCtx.currentTime);
-      osc1.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.15);
-      gain1.gain.setValueAtTime(0.2, audioCtx.currentTime);
-      gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-    } else if (type === 'reset') {
-      osc1.frequency.setValueAtTime(400, audioCtx.currentTime);
-      osc1.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.25);
-      gain1.gain.setValueAtTime(0.15, audioCtx.currentTime);
-      gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-    }
-    
-    osc1.start(audioCtx.currentTime);
-    osc1.stop(audioCtx.currentTime + (type === 'click' ? 0.1 : type === 'stop' ? 0.2 : 0.3));
-    
-    // Add high-frequency "clack" overlay
-    const osc2 = audioCtx.createOscillator();
-    const gain2 = audioCtx.createGain();
-    osc2.connect(gain2);
-    gain2.connect(audioCtx.destination);
-    osc2.frequency.setValueAtTime(1500, audioCtx.currentTime);
-    gain2.gain.setValueAtTime(0.08, audioCtx.currentTime);
-    gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
-    osc2.start(audioCtx.currentTime);
-    osc2.stop(audioCtx.currentTime + 0.08);
-    
-  } else if (type === 'start') {
-    // Start sound with more prominence
-    const osc1 = audioCtx.createOscillator();
-    const gain1 = audioCtx.createGain();
-    osc1.connect(gain1);
-    gain1.connect(audioCtx.destination);
-    osc1.frequency.setValueAtTime(600, audioCtx.currentTime);
-    gain1.gain.setValueAtTime(0.25, audioCtx.currentTime);
-    gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-    osc1.start(audioCtx.currentTime);
-    osc1.stop(audioCtx.currentTime + 0.15);
-    
-    const osc2 = audioCtx.createOscillator();
-    const gain2 = audioCtx.createGain();
-    osc2.connect(gain2);
-    gain2.connect(audioCtx.destination);
-    osc2.frequency.setValueAtTime(1200, audioCtx.currentTime);
-    gain2.gain.setValueAtTime(0.12, audioCtx.currentTime);
-    gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-    osc2.start(audioCtx.currentTime);
-    osc2.stop(audioCtx.currentTime + 0.1);
-    
-  } else if (type === 'save') {
-    // Save confirmation sound
-    const osc1 = audioCtx.createOscillator();
-    const gain1 = audioCtx.createGain();
-    osc1.connect(gain1);
-    gain1.connect(audioCtx.destination);
-    osc1.frequency.setValueAtTime(800, audioCtx.currentTime);
-    gain1.gain.setValueAtTime(0.15, audioCtx.currentTime);
-    gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-    osc1.start(audioCtx.currentTime);
-    osc1.stop(audioCtx.currentTime + 0.2);
-    
-    const osc2 = audioCtx.createOscillator();
-    const gain2 = audioCtx.createGain();
-    osc2.connect(gain2);
-    gain2.connect(audioCtx.destination);
-    osc2.frequency.setValueAtTime(1600, audioCtx.currentTime);
-    gain2.gain.setValueAtTime(0.08, audioCtx.currentTime);
-    gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-    osc2.start(audioCtx.currentTime);
-    osc2.stop(audioCtx.currentTime + 0.15);
-    
-    // Second tone for "double confirmation"
-    setTimeout(() => {
-      const osc3 = audioCtx.createOscillator();
-      const gain3 = audioCtx.createGain();
-      osc3.connect(gain3);
-      gain3.connect(audioCtx.destination);
-      osc3.frequency.setValueAtTime(800, audioCtx.currentTime + 0.1);
-      gain3.gain.setValueAtTime(0.12, audioCtx.currentTime + 0.1);
-      gain3.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
-      osc3.start(audioCtx.currentTime + 0.1);
-      osc3.stop(audioCtx.currentTime + 0.25);
-    }, 80);
-  }
-}
-
-// === BENCHMARK RESET ===
-function resetBenchmarks() {
-  document.getElementById('resetModal').classList.add('show');
-}
-
-function confirmReset() {
-  appState.benchmarks = { bestDayCalls: 0, avgDailyCalls: 0, lastResetDate: new Date().toISOString().split('T')[0] };
-  
-  // Calculate new averages from existing data
-  const allDates = [...new Set(appState.dailyLogs.map(l => l.date))];
-  appState.benchmarks.avgDailyCalls = allDates.length > 0 ? appState.dailyLogs.length / allDates.length : 0;
-  
-  saveData();
-  closeModal();
-  updateTicker();
-  generateInsight();
-}
-
-function closeModal() {
-  document.getElementById('resetModal').classList.remove('show');
-}
-
-// === INIT ON LOAD ===
-window.addEventListener('DOMContentLoaded', init);
-</script>
+            setTimeout(() => {
+                switch(base) {
+                    case 'CALL':
+                        const num = parseInt(arg) || 1;
+                        stats.calls += num;
+                        printLine(`EXECUTION LOGGED: ${num} OUTBOUND TOUCHPOINTS. BASE MULTIPLE STABILIZED.`);
+                        break;
+                    case 'STRAT':
+                        stats.strat += 1;
+                        printLine(`R&D LOGGED: 1 STRATEGIC REVIEW EXECUTED. STATUS UPGRADED TO BUY.`);
+                        document.getElementById('status-val').innerText = "BUY";
+                        break;
+                    case 'CE':
+                        const ceNum = parseInt(arg) || 1;
+                        stats.ce = Math.max(0, stats.ce - ceNum);
+                        printLine(`DEBT SERVICED: ${ceNum} HOURS CLEARED. COGNITIVE DRAG REDUCED.`);
+                        break;
+                    case 'ACQ-O':
+                        const valO = parseFloat(arg) || 0;
+                        stats.ev += valO * 1.5; // Premium multiple for organic
+                        printLine(`ORGANIC M&A LOGGED: $${valO}M ADDED. MAXIMAL ENTERPRISE VALUE EXPANSION CAPTURED.`);
+                        break;
+                    case 'NOTE':
+                        printLine(`FORWARD GUIDANCE RECEIVED. RUNNING SENTIMENT ANALYSIS... LOGGED.`);
+                        break;
+                    case 'DIAG':
+                        printLine(`SYSDIAG RUNNING...`, true);
+                        printLine(`STATUS: MARGIN COMPRESSION IMMINENT.`, true);
+                        printLine(`ANALYSIS: You are carrying 8 hours of CE Debt. Inbound reactivity is high. Historical data indicates a 22% drop in M&A velocity when proactive R&D ceases.`, true);
+                        printLine(`DIRECTIVE: Execute 1 STRAT command or clear 2 hours of CE today to halt multiple contraction.`, true);
+                        break;
+                    case 'CLEAR':
+                        outputContainer.innerHTML = '';
+                        break;
+                    default:
+                        printLine(`UNRECOGNIZED SYNTAX. REFERENCE COMMAND BAR.`);
+                }
+                updateHUD();
+            }, 400); // Slight delay for terminal feel
+        }
+    </script>
 </body>
 </html>
